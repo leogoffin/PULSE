@@ -1,6 +1,6 @@
 import numpy as np
-from findCp import findCp
-from atmosphere_isa import Air
+from .findCp import findCp
+from .atmosphere_isa import Air
 
 def av(x: float, y: float):
     """

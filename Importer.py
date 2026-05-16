@@ -5,12 +5,12 @@ if ROOT_DIR not in sys.path:
     sys.path.insert(0, ROOT_DIR)
 
 import numpy as np
-from findCp import findCp
-from atmosphere_isa import Air
-from functions import *
+from modules.findCp import findCp
+from modules.atmosphere_isa import Air
+from modules.functions import *
 from pystdatm import temperature, pressure, density, speed_of_sound, viscosity
-from unit_converter import *
-import combustion_chambers as cc
-import compressors as compr
-import turbines as turb
-from controllers import Pcontrol
+from modules.unit_converter import *
+import modules.combustion_chambers as cc
+import modules.compressors as compr
+import modules.turbines as turb
+from modules.controllers import Pcontrol

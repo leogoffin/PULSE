@@ -1,7 +1,7 @@
 import numpy as np
-from findCp import findCp
-from atmosphere_isa import Air
-from functions import av, get_gamma
+from .findCp import findCp
+from .atmosphere_isa import Air
+from .functions import av, get_gamma
 
 def with_P(P_T, m_dot, f, Pin=None, TIT=None, eta_is=1, tol=1e-5):
     """

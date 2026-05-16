@@ -57,4 +57,3 @@ T = Tp + Ts
 print(f"Thrust : {T/1e3:.2f} kN")
 SFC = mdotf/T
 print(f"SFC : {SFC*10*3600:.3f} kg/DaNh")
-P6.print_state()

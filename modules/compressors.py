@@ -1,7 +1,7 @@
 import numpy as np
-from findCp import findCp
-from atmosphere_isa import Air
-from functions import av, get_gamma
+from .findCp import findCp
+from .atmosphere_isa import Air
+from .functions import av, get_gamma
 
 def with_eta(P1, m_dot, pi_c, eta_c_is,
                        P2=None, v=0, tol=1e-5):

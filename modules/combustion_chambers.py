@@ -1,7 +1,7 @@
 import numpy as np
-from findCp import findCp
-from atmosphere_isa import Air
-from functions import av
+from .findCp import findCp
+from .atmosphere_isa import Air
+from .functions import av
 
 def with_f(P1, Qc, T0_ref, m_dot, m_dot_e, f,
                P2=None, v=0, delta_p=0, tol=1e-5):
