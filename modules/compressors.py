@@ -195,3 +195,8 @@ def with_eta_poly(P1, m_dot, pi_c, eta_p,
     power = m_dot * Cp * (P2.T0 - P1.T0)
 
     return P2, power, Cp
+
+def get_eta_poly(P1,P2,pi_c,f=0):
+    Cp12 = findCp(av(P1.T0,P2.T0),f)
+    g = get_gamma(Cp12)
+    return (g-1)/g * np.log(pi_c)/np.log(P2.T0/P1.T0)

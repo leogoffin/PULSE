@@ -22,7 +22,7 @@ P1.set_isa(0)   #isa conditions (ground)
 P1.set_total()  #Gives all total(stagnation) values
 
 P2, Pc, Cp12 = compr.with_eta(P1, m_dot, pi_c, eta_c_is) # compressor
-P3 = cc.with_f(P2, Qc, P1.T0, m_dot, m_dot_e, f) # combustion chamber
+P3 = cc.with_Qc(P2, Qc, P1.T0, m_dot, m_dot_e, f) # combustion chamber
 P4 = Air()
 P4.T0 = T0_4
 Cp34 = findCp(av(P3.T0, P4.T0), f)

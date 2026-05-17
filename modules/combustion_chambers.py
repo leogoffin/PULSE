@@ -3,7 +3,7 @@ from .findCp import findCp
 from .atmosphere_isa import Air
 from .functions import av
 
-def with_f(P1, Qc, T0_ref, m_dot, m_dot_e, f,
+def with_Qc(P1, Qc, T0_ref, m_dot, m_dot_e, f,
                P2=None, v=0, delta_p=0, tol=1e-5):
     """
     Solves combustor outlet temperature using energy balance with variable Cp and fuel fraction f.
@@ -78,8 +78,7 @@ def rev_with_f(P2, delta_hf, T0_ref, m_dot, f,
 
     while rel_diff > tol:
 
-        P1.T0 = T0_ref + (m_dot * (1 + f) * Cp2r * (P2.T0 - T0_ref)
-                          - m_dot * f * delta_hf) / (m_dot * Cp1r)
+        P1.T0 = T0_ref + (m_dot * (1 + f) * Cp2r * (P2.T0 - T0_ref) - m_dot * f * delta_hf) / (m_dot * Cp1r)
 
         new_Cp1r = findCp(av(T0_ref, P1.T0), 0)
         rel_diff = np.abs((Cp1r - new_Cp1r) / Cp1r)
@@ -167,3 +166,43 @@ def get_eta(P1, T0_ref, m_dot, f, Delta_hf, T0_out):
     )
 
     return eta_cc
+
+
+def with_f(P1, T0_ref, m_dot, Delta_hf, fadd, fin = 0, eta_cc=1, pi_cc=1, tol=1e-5):
+    """
+    Computes fuel-air ratio and outlet state for a specified combustor outlet temperature.
+
+    Args:
+        P1 (Air): Inlet state object.
+        T0_ref (float): Reference temperature (K).
+        m_dot (float): Air mass flow rate (kg/s).
+        Delta_hf (float): Fuel heating value.
+        T0_out (float): Target outlet temperature (K).
+        f (float, optional): Initial fuel fraction offset. Defaults to 0.
+        eta_cc (float, optional): Combustion efficiency. Defaults to 1.
+        pi_cc (float, optional): Pressure ratio. Defaults to 1.
+        tol (float, optional): Convergence tolerance. Defaults to 1e-5.
+
+    Returns:
+        tuple: (Outlet state, fuel mass flow rate, fuel-air ratio)
+    """
+    Cp1_r = findCp(av(P1.T0, T0_ref), fin)
+    ftot = fadd +fin
+    diff = np.inf
+    P2 = Air()
+    P2.T0 = P1.T0*1.4
+    while diff > tol:
+
+        Cp2_r = findCp(av(P2.T0, T0_ref), ftot)
+        new_T = T0_ref + (fadd * eta_cc * Delta_hf + (1 + fin) * Cp1_r * (P1.T0 - T0_ref))/ ((1 + ftot) * Cp2_r)
+        diff = abs(new_T - P2.T0) / P2.T0
+        P2.T0 = new_T
+
+    P2.p0 = P1.p0 * pi_cc
+    P2.cp = findCp(P2.T0, ftot)
+    P2.get_gamma_from_cp()
+    P2.rho0 = P2.p0 / (P2.R * P2.T0)
+    P2.h0 = P2.cp * P2.T0
+    P2.s = P1.s + P2.cp * np.log(P2.T0 / P1.T0) - P2.R * np.log(P2.p0 / P1.p0)
+
+    return P2

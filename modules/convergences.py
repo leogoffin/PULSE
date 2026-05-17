@@ -79,3 +79,12 @@ def PIDcontrol(ref, measure, last_errors=None, Kp=1.0, Ki=0, Kd=0, tol=1e-5):
         return True, 0.0, last_errors
 
     return False, output, last_errors
+
+
+def secant(xn,xn_1,fxn,fxn_1,Min= None,Max= None):
+    new_xn = xn - fxn * (xn-xn_1)/(fxn-fxn_1)
+    if Min is not None :
+        new_xn = max(Min,new_xn)
+    if Max is not None : 
+        new_xn = min(Max,new_xn)
+    return new_xn,xn,0,fxn_1

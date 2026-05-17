@@ -13,4 +13,4 @@ from modules.unit_converter import *
 import modules.combustion_chambers as cc
 import modules.compressors as compr
 import modules.turbines as turb
-from modules.controllers import Pcontrol
+from modules.convergences import Pcontrol,secant

@@ -47,8 +47,7 @@ def with_P(P_T, m_dot, f, Pin=None, TIT=None, eta_is=1, tol=1e-5):
 
     if Pin.p0 is not None:
         P2.p0 = (T2s / Pin.T0)**(gamma / (gamma - 1)) * Pin.p0
-
-    P2.rho0 = P2.p0 / (P2.R * P2.T0)
+        P2.rho0 = P2.p0 / (P2.R * P2.T0)
     P2.cp = findCp(P2.T0, f)
     P2.get_gamma_from_cp()
     P2.h0 = P2.cp * P2.T0

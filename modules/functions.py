@@ -254,7 +254,7 @@ def corrected_compr(Pc_ref,P_ref,Pin):
     return Pc_ref* (Pin.p0/P_ref.p0)*np.sqrt(Pin.T0/P_ref.T0)
 
 
-def mixing(PP,PS,T0_ref,mdotp,mdots,f,tol = 1e-5):
+def mixing(PP,PS,T0_ref,mdotp,mdots,f,pi_m = 1,tol = 1e-5):
     """
     Computes mixing of primary and secondary streams.
     """
@@ -270,14 +270,30 @@ def mixing(PP,PS,T0_ref,mdotp,mdots,f,tol = 1e-5):
     while diff > tol:
         Cpnozzle = findCp(av(Pm.T0,T0_ref),global_f)
         new_T0 = T0_ref + (mdots*Cps*(PS.T0-T0_ref) + mdotp * (1+f) * Cpp * (PP.T0 -T0_ref))/((mdotp*(1+f)+mdots)*Cpnozzle)
-        diff = (Pm.T0 - new_T0) / Pm.T0
+        diff = abs(Pm.T0 - new_T0) / Pm.T0
         Pm.T0 = new_T0
 
-    Pm.p0 = PP.p0
+    Pm.p0 = PP.p0*pi_m
     Pm.cp = findCp(Pm.T0,global_f)
     Pm.get_gamma_from_cp()
 
     return Pm,global_f
+
+
+def approx_mixing(PP,PS,T0_ref,mdotp,mdots,f,pi_m = 1,tol = 1e-5):
+    """
+    Computes mixing of primary and secondary streams.
+    """
+    Pm = Air()
+    global_f = f*mdotp /(mdotp + mdots)
+    Pm.T0 = (mdotp*PP.T0 + mdots*PS.T0)/(mdotp+mdots)
+    Pm.p0 = PP.p0*pi_m
+    Pm.cp = findCp(Pm.T0,global_f)
+    Pm.get_gamma_from_cp()
+    
+    return Pm,global_f
+
+
 
 def eta_is_from_eta_poly(pi_c, eta_poly, gamma=1.4):
     """
