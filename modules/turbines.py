@@ -179,3 +179,63 @@ def with_P_poly(P_T, m_dot, f,
         P2.s = (Pin.s+ P2.cp * np.log(P2.T0 / Pin.T0)- P2.R * np.log(P2.p0 / Pin.p0))
 
     return P2, Cp_new, pi_t
+
+def rev_with_P(P_T, m_dot, f, P2=None, Tout=None, eta_is=1, tol=1e-5):
+    """
+    Computes turbine outlet state using power balance with Cp(T)-dependent properties.
+
+    Args:
+        P_T (float): Turbine power (W).
+        m_dot (float): Mass flow rate (kg/s).
+        f (float): Fuel-air ratio.
+        Pin (Air, optional): Inlet state object. Defaults to None.
+        TIT (float, optional): Turbine inlet temperature (K). Used if Pin is not provided.
+        eta_is (float, optional): Isentropic efficiency. Defaults to 1.
+        tol (float, optional): Convergence tolerance. Defaults to 1e-5.
+
+    Returns:
+        tuple: (Outlet state, converged Cp, isentropic outlet temperature)
+    """
+    if P2 is None:
+        if Tout is not None:
+            P2 = Air()
+            P2.T0 = Tout
+            P2.cp = findCp(Tout, f)
+        else:
+            print("Error : neither Tout nor outlet condition (P2) were given")
+
+    if P2.cp is None:
+        P2.cp = findCp(P2.T0, f)
+
+    Cp_trial = P2.cp
+    diff = np.inf
+
+    while diff > tol:
+        T1_0 = P2.T0 + P_T / (m_dot * (1 + f) * Cp_trial)
+        Cp_new = findCp(av(P2.T0, T1_0), f)
+        diff = abs(Cp_new - Cp_trial) / Cp_trial
+        Cp_trial = Cp_new
+        gamma = get_gamma(Cp_trial)
+
+    T2s = T1_0 - (T1_0 - P2.T0) / eta_is
+
+    P1 = Air()
+    P1.T0 = T1_0
+
+    if P2.p0 is not None:
+        P1.p0 = P2.p0 / (T2s / P1.T0)**(gamma / (gamma - 1)) 
+        P1.rho0 = P1.p0 / (P1.R * P1.T0)
+    else : 
+        pi_t = (T2s / P1.T0)**(gamma / (gamma - 1)) 
+        print(f"Turbine expansion ratio : {1/pi_t:.3f}")
+    P1.cp = findCp(P1.T0, f)
+    P1.get_gamma_from_cp()
+    P1.h0 = P1.cp * P1.T0
+
+    if P2.s is not None and P2.p0 is not None:
+        P1.s = P2.s - P2.cp * np.log(P2.T0 / P1.T0) + P2.R * np.log(P2.p0 / P1.p0)
+
+    return P2, Cp_new, T2s
+
+def get_eta_poly(pi_t,eta_is,gamma):
+    return np.log(1 - eta_is*(1 - pi_t**(-(gamma-1)/gamma))) / np.log(pi_t**(-(gamma-1)/gamma))

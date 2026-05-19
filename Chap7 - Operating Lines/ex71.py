@@ -3,10 +3,8 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from Importer import *
 
-fttom = 0.3048
-
 M0 = 0.82
-altitude = 35000 * fttom #ft -> m
+altitude = 35000 * ft_to_m #m
 a = speed_of_sound(altitude)
 v = M0*a
 
@@ -20,6 +18,8 @@ P0 = Air(v)     # Ambient air (static, ground cond)
 P0.set_isa(altitude)   #isa conditions (ground)
 P0.set_total()  #Gives all total(stagnation) values
 
+P1 = P0.RAM()
+P0.print_state()
 p0_star = 101325 #Pa
 T0_star = 288.15 #K
 mdot = m_dot_star * P0.p0 / p0_star * np.sqrt(T0_star / P0.T0)
