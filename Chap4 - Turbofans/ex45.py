@@ -52,8 +52,8 @@ P0.set_total()
 
 P1_corr = P0.RAM()
 
-mdot_corr = corrected_massflow(mdot,P1_corr,P1)
-n_corr = corrected_rpm(n,P1_corr,P1)
+mdot_corr = true_massflow_from_corrected(mdot,P1_corr,P1)
+n_corr = true_rpm_from_corrected(n,P1_corr,P1)
 
 print(f"Corrected mass flow : {mdot_corr:.3f} kg/s")
 print(f"Corrected rpm : {n_corr:.0f} RPM")

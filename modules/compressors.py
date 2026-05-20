@@ -1,7 +1,8 @@
 import numpy as np
 from .findCp import findCp
 from .atmosphere_isa import Air
-from .functions import av, get_gamma
+from .functions import *
+
 
 def with_eta(P1, m_dot, pi_c, eta_c_is,
                        P2=None, v=0, tol=1e-5):
@@ -283,3 +284,61 @@ def with_eta_poly_per_stage(P1, m_dot, pi_c, eta_p,P2=None, v=0, tol=1e-5):
     power = m_dot * Cp * (P2.T0 - P1.T0)
 
     return P2, power, Cp, eta_is
+
+
+
+def IterateMatchingFan_and_SecondaryNozzle(P1,Pref, pi_fs_values, eta_fs_values, m_dot_star_values, BPR, A_nozzle, tol = 1e-4,max_iter = 100):
+    """We assume the nozzle remains choked (as in primary flow), so we can use similarity
+       fan_pi and eta_s_fan are tables used to interpolate wrt to m_dot. Select 4 points 
+       from operating map to put in tables"""
+    NPR_crit = 1.89
+
+    f_eta = interp1d(m_dot_star_values, eta_fs_values, kind='linear', bounds_error=False, fill_value='extrapolate')
+    f_pi  = interp1d(m_dot_star_values, pi_fs_values,  kind='linear', bounds_error=False, fill_value='extrapolate')
+
+    def nozzle_mass_flow(m_dot_star):
+        pi_fs  = float(f_pi(m_dot_star))
+        eta_fs = float(f_eta(m_dot_star))
+        p_2_tot = pi_fs * P1.p0
+        NPR = p_2_tot / Pref.p
+        P2s,Pcs,Cp12s = with_eta(P1,m_dot_star,pi_fs,eta_fs)
+        gamma12 = get_gamma(Cp12s)
+        return ChokedMassFlow(P2s, gamma12, A_nozzle)
+
+    m_star_1 = float(np.min(m_dot_star_values)) 
+    m_star_2 = float(np.max(m_dot_star_values))
+
+    delta_1  = true_massflow_from_corrected(m_star_1*BPR/(1+BPR),P1,Pref) - nozzle_mass_flow(m_star_1)
+    delta_2  = true_massflow_from_corrected(m_star_2*BPR/(1+BPR),P1,Pref) - nozzle_mass_flow(m_star_2)
+
+    if delta_1 * delta_2 > 0:
+        raise ValueError(  f"Root not bracketed: Δm1={delta_1:.4f}, Δm2={delta_2:.4f} "  f"at m_dot_star=[{m_star_1:.1f}, {m_star_2:.1f}]")
+
+    m_star_m  = None
+    delta_m_m = None
+
+    for i in range(max_iter):
+        m_star_m  = (m_star_1 + m_star_2) / 2.0
+        delta_m_m = true_massflow_from_corrected(m_star_m*BPR/(1+BPR),P1,Pref) - nozzle_mass_flow(m_star_m)
+
+        m_dot_m_s = m_star_m *BPR/(1+BPR)
+        if abs(delta_m_m) < tol * m_dot_m_s:
+            print(f"  Converged in {i+1} iterations  |Δm|={abs(delta_m_m):.2e} kg/s")
+            break
+
+        if delta_m_m * delta_1 > 0:
+            m_star_1 = m_star_m
+            delta_1  = delta_m_m
+        else:
+            m_star_2 = m_star_m
+    else:
+        print(f"  No convergence after {max_iter} iterations  |Δm|={abs(delta_m_m):.2e} kg/s")
+
+    pi_fs_conv  = float(f_pi(m_star_m))
+    eta_fs_conv = float(f_eta(m_star_m))
+    m_dot_real  = m_star_m * (P1.p0 / Pref.p) / np.sqrt(P1.T0 / Pref.T)
+    m_dot_s_conv = m_dot_real * BPR /(1+ BPR)
+    P2 = Air()
+    P2,Pc,Cp12 = with_eta(P1,m_dot_real,pi_fs_conv,eta_fs_conv)
+
+    return m_dot_real, m_dot_s_conv, pi_fs_conv, eta_fs_conv, P2

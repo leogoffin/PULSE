@@ -14,3 +14,4 @@ import modules.combustion_chambers as cc
 import modules.compressors as compr
 import modules.turbines as turb
 from modules.convergences import Pcontrol,secant
+from scipy.interpolate import interp1d

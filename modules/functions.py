@@ -1,6 +1,7 @@
 import numpy as np
 from .findCp import findCp
 from .atmosphere_isa import Air
+from scipy.interpolate import interp1d
 
 def av(x: float, y: float):
     """
@@ -117,7 +118,7 @@ def adiabatic_convergent_nozzle(P1,m_dot,f,pa,gamma13 = 1.37,tol = 1e-5):
         else:
             choked = True
             P3.p = P3.p0 / NPR_star
-            P3.T = P3.T0 / (1 + (P3.gamma-1)/2)
+            P3.T = P3.T0 / (1 + (gamma13-1)/2)
             P3.M = 1
 
             Cp13 = findCp(av(P3.T,P1.T0),f)
@@ -168,7 +169,7 @@ def adiabatic_convdiv_nozzle(P1,m_dot,f,pout,gamma12 = 1.37,tol = 1e-5):
         diff = abs(new_gamma-gamma12)/gamma12
         gamma12 = new_gamma
 
-    P2.a = np.sqrt(P2.gamma*P2.R*P2.T)
+    P2.a = np.sqrt(P2.gamma12*P2.R*P2.T)
     P2.v = P2.M*P2.a
     P2.rho0 = P2.p0 / (P2.R * P2.T0)
     P2.h0 = P2.cp * P2.T0
@@ -211,11 +212,11 @@ def turbofan_thrust(m_dot_p,m_dot_s,f,P0,PP,PS= None,AP= 0,AS = 0):
     return Tp,Ts
 
 
-def simple_thrust(m_dot,f,P0,P,AP= 0):
+def simple_thrust(m_dot,f,P0,P,A= 0):
     """
     Computes simple jet thrust.
     """
-    Tp = m_dot * (1+f) * P.v - m_dot * P0.v + (P.p-P0.p)*AP
+    Tp = m_dot * (1+f) * P.v - m_dot * P0.v + (P.p-P0.p)*A
     return Tp
 
 
@@ -237,10 +238,22 @@ def corrected_massflow(mdot_ref,P1,Pref):
     """
     Computes corrected mass flow.
     """
-    return mdot_ref * (P1.p0/Pref.p0) * np.sqrt(Pref.T0/P1.T0)
+    return mdot_ref / (P1.p0/Pref.p0) / np.sqrt(Pref.T0/P1.T0)
+
+def true_massflow_from_corrected(mdot_corr,P1,Pref):
+    """
+    Computes actual mass flow.
+    """
+    return mdot_corr * (P1.p0/Pref.p0) * np.sqrt(Pref.T0/P1.T0)
+
+def corrected_rpm(rpm_true,P1,Pref):
+    """
+    Computes corrected RPM.
+    """
+    return rpm_true / np.sqrt(P1.T0/Pref.T0)
 
 
-def corrected_rpm(rpm_ref,P1,Pref):
+def true_rpm_from_corrected(rpm_ref,P1,Pref):
     """
     Computes corrected RPM.
     """
@@ -352,3 +365,26 @@ def eta_poly_from_eta_is(pi_c, eta_is, gamma=1.4):
     a = (gamma - 1) / gamma
 
     return (a * np.log(pi_c)) / (np.log(1 + (pi_c**a - 1) / eta_is))
+
+def choking_NPR(gamma):
+    return ((gamma + 1 )/2)**(gamma/(gamma-1))
+
+
+def ChokedMassFlow(P2, gamma, A):
+    """
+    ṁ* = A · p_tot · sqrt(gamma/(R·T_tot)) · (2/(gamma+1))^((gamma+1)/(2·(gamma-1)))
+    """
+    exponent = (gamma + 1) / (2 * (gamma - 1))
+    return A * P2.p0 * np.sqrt(gamma / (P2.R * P2.T0)) * (2 / (gamma + 1))**exponent
+
+def PropulsiveEff(m_dot_in, m_dot_f, v_j, v_1, T):
+    """Computes propulsive efficiency from mass flow rates, exit velocity vj, inlet velocity v_1 and thrust T"""
+    eta_p = (2*T*v_1) / ((m_dot_in + m_dot_f) * v_j**2 - m_dot_in * v_1**2 )
+    return eta_p
+
+def ThermalEff_from_Power(m_dot_a, v_j, v_1, P):
+    eta_th = 0.5 * m_dot_a * (v_j**2 - v_1**2) / P
+    return eta_th
+
+def overalleff(eta_t,eta_p):
+    return eta_p*eta_t
