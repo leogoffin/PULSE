@@ -285,7 +285,6 @@ def ground_operation(P1,mdot,A_t,K=2.5, g = 9.81, doprint=False):
     Pe.v = Pe.M * np.sqrt(P1.gamma * P1.R * Pe.T)
     Pe.rho = Pe.R*Pe.T/Pe.p
     Asep = mdot/Pe.v/Pe.rho
-    Pe.print_state()
     T = mdot*Pe.v + (Pe.p - P.p)*Asep
     Isp = T/mdot/g
     c_T = T/P1.p0/A_t

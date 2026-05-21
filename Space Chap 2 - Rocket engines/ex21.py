@@ -32,7 +32,6 @@ A_e = A_t * A_ratio
 print(f"Throat area : {A_t:.4f} m²")
 Me = M_nozzle(P1,mdot,A_e)
 Pe = exhaust_cds(P1,Me)
-Pe.print_state()
 
 T = space_thrust(mdot,Pe,A_e)
 Isp = T/mdot/g
