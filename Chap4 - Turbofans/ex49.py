@@ -58,11 +58,11 @@ while not converged and len(errs)<100 :
 P6,mixed_f = mixing(P5,P2,P1.T0,mdotp,mdots,f_dry,pi_m = pi_m) 
 
 P7,choked,NPR,A = adiabatic_convergent_nozzle(P6,mdot,mixed_f,P1.p)
-T = simple_thrust(mdot,mixed_f,P1,P7,AP = A)
+T = simple_thrust(mdot,mixed_f,P1,P7,A = A)
 print(f"Dry Thrust {T:.0f} N")
 
 P7b = cc.with_f(P6,P1.T0,mdot,delta_hf,f_final-mixed_f,mixed_f,pi_ab)
 P8b,chokedb,NPRb,Ab = adiabatic_convergent_nozzle(P7b,mdot,f_final,P1.p)
-Tb = simple_thrust(mdot,f_final,P1,P8b,AP = Ab)
+Tb = simple_thrust(mdot,f_final,P1,P8b,A = Ab)
 print(f"Wet Thrust {Tb:.0f} N")
-P7.print_state()
+#P7.print_state()

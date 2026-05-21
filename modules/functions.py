@@ -388,3 +388,9 @@ def ThermalEff_from_Power(m_dot_a, v_j, v_1, P):
 
 def overalleff(eta_t,eta_p):
     return eta_p*eta_t
+
+def f(M,gamma):
+    return 1 + (gamma-1)/2 * M**2
+
+def F(M,gamma):
+    return np.sqrt(gamma)* M * f(M,gamma)**(-(gamma + 1)/ (2 * (gamma - 1)))

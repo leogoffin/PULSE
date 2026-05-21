@@ -13,7 +13,7 @@ class Air:
         v (float): Flow velocity (m/s).
     """
 
-    def __init__(self, v: float = 0):
+    def __init__(self, v: float = 0,R : float = 287.05):
         self.v = v
 
         # Static (ambient) properties
@@ -25,7 +25,7 @@ class Air:
         self.nu       = None   # m²/s   kinematic viscosity
         self.cp       = None   # J/kg·K
         self.gamma    = None
-        self.R        = 287.05 # J/kg·K  specific gas constant
+        self.R        = R # J/kg·K  specific gas constant
         self.y        = None   # m      altitude
         # Flow quantities
         self.M        = None

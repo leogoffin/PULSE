@@ -13,5 +13,6 @@ from modules.unit_converter import *
 import modules.combustion_chambers as cc
 import modules.compressors as compr
 import modules.turbines as turb
-from modules.convergences import Pcontrol,secant
+from modules.convergences import bisection,Pcontrol
+from modules.space_propulsion import *
 from scipy.interpolate import interp1d
