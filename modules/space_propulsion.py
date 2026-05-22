@@ -190,6 +190,9 @@ def combustion_analysis(
 def charac_vel(P1):
     return np.sqrt(P1.gamma*P1.R*P1.T0)/P1.gamma * ((P1.gamma +1)/2)**((P1.gamma + 1)/(2*(P1.gamma-1)))
 
+def get_R(M):
+    R_star = 8.31
+    return R_star/M*1000
 
 def f(M,gamma):
     return 1 + (gamma-1)/2 * M**2
@@ -212,7 +215,7 @@ def A_nozzle(P1,mdot,M = None,gamma = None):
         gamma = P1.gamma
     return mdot/(P1.p0/(np.sqrt(P1.R*P1.T0))*F(M,gamma))
 
-def M_nozzle(P1,mdot,A,gamma = None,Mmin = 0.4,Mmax = 6,tol = 1e-4):
+def M_nozzle(P1,mdot,A,gamma = None,Mmin = 1,Mmax = 6,tol = 1e-4):
     if gamma is None : 
         gamma = P1.gamma
 
@@ -229,17 +232,52 @@ def M_nozzle(P1,mdot,A,gamma = None,Mmin = 0.4,Mmax = 6,tol = 1e-4):
     print(f"found root at {c:.3e} - error : {error(c):.3e}")
     return c
 
+def A_ratio_nozzle(P1,M = None,gamma = None):
+    if M is None : 
+        M = P1.M
+    if gamma is None : 
+        gamma = P1.gamma
+    
+    return F(1, gamma) / F(M, gamma)
+    
+def M_nozzle2(P1,A_ratio,gamma = None, Mmin = 1,Mmax = 6,tol = 1e-4):
+    if gamma is None : 
+        gamma = P1.gamma
+
+    a = Mmin
+    b = Mmax
+
+    def error(c):
+        return  A_ratio_nozzle(P1, c, gamma) - A_ratio
+    
+    c,its =  bisection(error,a,b)
+    print(f"Bisection converged in {its} steps")
+    print(f"found root at {c:.3e} - error : {error(c):.3e}")
+    return c
+
+
 def space_thrust(mdot,Pe,Ae):
     return mdot*Pe.v + Pe.p*Ae
 
+def mdot_from_T(T,Pe,Ae):
+    return (T-Pe.p*Ae)/Pe.v
+
+def get_c_star(Pr):
+    return np.sqrt(Pr.R*Pr.T0)/F(1,Pr.gamma)
+
 def exhaust_cds(P1,Me):
     Pe = Air(R = P1.R)
-    Pe.p = P1.p0/f(Me,P1.gamma)**(P1.gamma/(P1.gamma-1))
+
     Pe.T = P1.T0/f(Me,P1.gamma)
     Pe.gamma = P1.gamma
     Pe.v = Me*np.sqrt(P1.gamma*Pe.R*Pe.T)
     Pe.M = Me
     Pe.a = np.sqrt(P1.gamma*Pe.R*Pe.T)
+    if P1.p0 is None : 
+        p_ratio = f(Me,P1.gamma)**(-P1.gamma/(P1.gamma-1)) 
+        return Pe,p_ratio
+    else : 
+        Pe.p = P1.p0/f(Me,P1.gamma)**(P1.gamma/(P1.gamma-1))   
     return Pe
 
 def fully_expanded(Pe,ptot,mdot,A_e,A_t,K=2.5, g = 9.81, doprint=False):
@@ -298,3 +336,30 @@ def ground_operation(P1,mdot,A_t,K=2.5, g = 9.81, doprint=False):
         print(f"Thrust coefficient         : {c_T:.3f}")
 
     return Pe,T,Isp,c_T
+
+
+def get_cT(P_ratio,A_ratio,gamma,Me,pa = 0):
+    if pa == 0 :
+        return A_ratio/P_ratio * (1 +gamma*Me**2)
+    else : 
+        return A_ratio/P_ratio * (gamma*Me**2)
+
+def At_from_cT(T,cT,p0):
+    return T/cT/p0
+
+def get_Isp_with_cT_star(cT,cstar,g=9.81):
+    return cT*cstar/g
+
+def mdot_from_Isp(T,Isp,g = 9.81):
+    return T/Isp/g
+
+def V_perfect_gas(m,Pr):
+    return m*Pr.R*Pr.T0/Pr.p0
+
+def Mach_from_pratio(pi,gamma):
+    return np.sqrt(2/(gamma-1)*(pi**((gamma-1)/gamma)-1))
+
+def pi_switch_nozzle_(pi1,pi2,ar1,ar2,M1,M2,gamma):
+    d1 = ar1/pi1 * (1 + gamma * M1**2)
+    d2 = ar2/pi2 * (1 + gamma * M2**2)
+    return (ar1-ar2) / ((d1) - (d2))
