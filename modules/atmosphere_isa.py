@@ -5,15 +5,12 @@ class Air:
     """
     Represents a flowing air/gas parcel at a given velocity.
 
-    Attach any GasModel via .set_state() to compute static and total
-    thermodynamic properties, plus Mach, Re, dynamic pressure,
-    entropy, and enthalpy.
-
     Args:
         v (float): Flow velocity (m/s).
+        R (float): 
     """
 
-    def __init__(self, v: float = 0,R : float = 287.05):
+    def __init__(self, v: float = 0,R : float = 287.058):
         self.v = v
 
         # Static (ambient) properties
@@ -107,17 +104,13 @@ class Air:
         self.M = self.v/self.a
         self.y = y
         self.q = 1/2*self.rho*self.v**2
-
-
-        
-        if self.cp is None :
-            self.get_cp_from_gamma() 
-
-        # Thermodynamics
+        self.gamma = a**2 / self.R / T
+        self.get_cp_from_gamma() 
         self.h = self.cp * self.T
         self.h0 = self.h + 0.5 * self.v**2
         # Entropy (relative to ISA sea level)
         self.s = self.cp * np.log(self.T / T_ref) - self.R * np.log(self.p / p0)
+        self.set_total()
     
     def set_total(self):
         """
@@ -227,10 +220,10 @@ class Air:
         return self.mu, self.nu
 
     def is_complete(self):
-        required = [self.rho, self.T, self.p, self.M]
+        required = [self.rho0, self.T0, self.p0, self.M]
         return all(v is not None for v in required)
 
-    def RAM(self,RR = 1):
+    def RAM(self,RR = 1,get_pi_R = True):
         P1 = Air(self.v)
         P1.T0 = self.T0
         P1.rho0 = self.rho0
@@ -240,6 +233,8 @@ class Air:
         P1.s = self.s
         P1.h0 = self.h0
         P1.set_static()
+        if get_pi_R : 
+            return P1, P1.p0/self.p
         return P1
 
     def complete_thermo(self):
@@ -309,6 +304,32 @@ class Air:
         print(f"Altitude (y)        : {fmt(self.y, 'm')}")
 
         print("="*50 + "\n")
+
+
+    def sprint(self,num, name = ""):
+        """
+        Pretty print all available flow properties.
+        """
+
+        def fmt(val, unit="", precision=3):
+            if val is None:
+                return "—"
+            if abs(val) < 1e-3 or abs(val) > 1e5:
+                return f"{val:.{precision}e} {unit}".strip()
+            return f"{val:.{precision}f} {unit}".strip()
+
+        print("\n" + "="*50)
+        print(f" Station {num}. {name} ")
+
+        print(f"T0                  : {fmt(self.T0, 'K')}")
+        print(f"p0                  : {fmt(self.p0, 'Pa')}")
+        print(f"rho0                : {fmt(self.rho0, 'kg/m³')}")
+        print(f"cp                  : {fmt(self.cp, 'J/kg·K')}")
+        print(f"gamma               : {fmt(self.gamma)}")
+        print(f"R                   : {fmt(self.R, 'J/kg·K')}")
+
+        print("="*50 + "\n")
+
 
 
 

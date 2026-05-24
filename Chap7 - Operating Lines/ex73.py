@@ -33,8 +33,7 @@ x = np.linspace(np.min(G_aOverG_a_star_points), np.max(G_aOverG_a_star_points), 
 
 f_pi = interp1d(G_aOverG_a_star_points, PiOverPi_star_points, kind='linear', bounds_error=False, fill_value='extrapolate')
 f_eta  = interp1d(PiOverPi_star_points_2, EtaOverEtastar_points_2,  kind='linear', bounds_error=False, fill_value='extrapolate')
-
-# Initialisation of empty tables 
+ 
 eta_prop = np.zeros(len(x))
 eta_th = np.zeros(len(x))
 A_ratio = np.zeros(len(x))
@@ -65,7 +64,7 @@ pi_opt = f_pi(x[index]) * pi_fan_star
 eta_is_opt = f_eta(f_pi(x[index])) * eta_f_is_star  
 
 
-print(f'Area ratio', A_ratio[index])
-print(f'Fan operating point:  m_dot_star: {m_star_opt},  pi_f_star: {pi_opt}, eta_s_star: {eta_is_opt}')
-print(f'In-flight values: T/A1: {T[index]/A1_opt},  m/A1: {x[index] * Ga_star}, Overall eff: {eta_overall}')
+print(f"Area ratio {A_ratio[index]:.3f}")
+print(f'Fan operating point:\n  m_dot_star: {m_star_opt:.0f}\n  pi_f_star: {pi_opt:.3f}\n eta_s_star: {eta_is_opt:.3f}')
+print(f'In-flight values:\n T/A1: {T[index]/A1_opt:.0f} \n m/A1: {x[index] * Ga_star:.0f} \n Overall eff: {eta_overall:.3f}')
 

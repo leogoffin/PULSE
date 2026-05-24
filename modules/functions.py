@@ -79,7 +79,52 @@ def isentropic_eff(h1, h2, h2s, type: str = "compr"):
     if type == "compr":
         return (h2s-h1)/(h2-h1)
 
-def adiabatic_convergent_nozzle(P1,m_dot,f,pa,gamma13 = 1.37,tol = 1e-5):
+def adiabatic_convdiv_nozzle(P1,m_dot,f,pa,gamma13 = 1.37,tol = 1e-5):
+    """
+    Computes flow through a convergent nozzle with choking condition.
+
+    Args:
+        P1 (Air): Inlet state.
+        m_dot (float): Mass flow rate (kg/s).
+        f (float): Fuel-air ratio.
+        pa (float): Ambient pressure (Pa).
+        gamma13 (float, optional): Heat capacity ratio. Defaults to 1.37.
+        tol (float, optional): Convergence tolerance. Defaults to 1e-5.
+
+    Returns:
+        tuple: (Outlet state, choked flag, pressure ratio, area)
+    """
+    P3 = Air()
+    P3.p0 = P1.p0
+    P3.T0 = P1.T0
+    NPR = P3.p0/pa
+    P3.cp = findCp(P3.T0,f)
+    P3.get_gamma_from_cp()
+
+    diff = np.inf
+
+    while diff > tol:        
+        P3.M = np.sqrt(2/(gamma13 -1)*((P3.p0/pa)**((gamma13-1)/gamma13)-1))
+        P3.T = P3.T0/((1+(gamma13-1)/2*P3.M**2))
+        Cp13 = findCp(av(P3.T,P1.T0),f)
+        new_gamma = get_gamma(Cp13)
+        diff = abs(new_gamma - gamma13)/gamma13
+        gamma13 = new_gamma
+        P3.gamma = gamma13
+
+    P3.p = P3.p0/((1+(gamma13-1)/2*P3.M**2))**(gamma13/(gamma13-1))
+    P3.a = np.sqrt(P3.gamma*P3.R*P3.T)
+    P3.v = P3.M*P3.a
+    P3.rho0 = P3.p0 / (P3.R * P3.T0)
+    P3.h0 = P3.cp * P3.T0
+    P3.s = P1.s + P3.cp*np.log(P3.T0/P1.T0) - P3.R*np.log(P3.p0/P1.p0)
+    P3.rho = P3.p/P3.R/P3.T
+    P3.set_static()
+    At = m_dot*(1+f)/P3.rho/P3.v
+
+    return P3, NPR, At
+
+def adiabatic_convergent_nozzle(P1,m_dot,f,pa,gamma13 = 1.37,tol = 1e-5,convdiv = False ):
     """
     Computes flow through a convergent nozzle with choking condition.
 
@@ -106,7 +151,7 @@ def adiabatic_convergent_nozzle(P1,m_dot,f,pa,gamma13 = 1.37,tol = 1e-5):
 
     while diff > tol:
 
-        if NPR < NPR_star:
+        if NPR < NPR_star or convdiv:
             choked = False
             P3.M = np.sqrt(2/(gamma13 -1)*((P3.p0/pa)**((gamma13-1)/gamma13)-1))
             P3.set_static()
@@ -133,51 +178,27 @@ def adiabatic_convergent_nozzle(P1,m_dot,f,pa,gamma13 = 1.37,tol = 1e-5):
     P3.s = P1.s + P3.cp*np.log(P3.T0/P1.T0) - P3.R*np.log(P3.p0/P1.p0)
     P3.rho = P3.p/P3.R/P3.T
     A = m_dot/P3.rho/P3.v
-
     return P3, choked, NPR, A
 
-
-def adiabatic_convdiv_nozzle(P1,m_dot,f,pout,gamma12 = 1.37,tol = 1e-5):
-    """
-    Computes flow through a convergent-divergent nozzle.
-
-    Args:
-        P1 (Air): Inlet state.
-        m_dot (float): Mass flow rate (kg/s).
-        f (float): Fuel-air ratio.
-        pout (float): Outlet pressure (Pa).
-        gamma12 (float, optional): Heat capacity ratio. Defaults to 1.37.
-        tol (float, optional): Convergence tolerance. Defaults to 1e-5.
-
-    Returns:
-        tuple: (Outlet state, area)
-    """
-    P2 = Air()
-    P2.p0 = P1.p0
+def iterate_M_nozzle(P1,pa,f,gamma = 1.39,tol = 1e-4):
+    P2 = Air(R = P1.R)
     P2.T0 = P1.T0
-    P2.p = pout
-    P2.cp = findCp(P2.T0,f)
-    P2.get_gamma_from_cp()
-
+    P2.p0 = P1.p0
     diff = np.inf
+    while diff > tol : 
+        P2.M = np.sqrt(2/(gamma-1)*((P1.T0/pa)**((gamma-1)/gamma)-1))
+        P2.T = P1.T0/((1+(gamma-1)/2*P1.M**2))
+        cp = findCp(av(P2.T,P1.T0), f)
+        gamma_new = get_gamma(cp)
+        error  = abs(gamma_new-gamma)/gamma
+        gamma = gamma_new
 
-    while diff > tol:
-        P2.M = np.sqrt(2/(gamma12-1)*((P2.p0/P2.p)**((gamma12-1)/gamma12)-1))
-        P2.T = P2.T0/(1 + (gamma12 - 1) / 2 * P2.M**2)
-        Cp12 = findCp(av(P2.T,P1.T0),f)
-        new_gamma = get_gamma(Cp12)
-        diff = abs(new_gamma-gamma12)/gamma12
-        gamma12 = new_gamma
-
-    P2.a = np.sqrt(P2.gamma12*P2.R*P2.T)
+    P2.gamma = gamma
+    P2.a = np.sqrt(P2.gamma*P2.R*P2.T)
     P2.v = P2.M*P2.a
-    P2.rho0 = P2.p0 / (P2.R * P2.T0)
-    P2.h0 = P2.cp * P2.T0
-    P2.s = P1.s + P2.cp*np.log(P2.T0/P1.T0) - P2.R*np.log(P2.p0/P1.p0)
-    P2.rho = P2.p/P2.R/P2.T
-    A = m_dot/P2.rho/P2.v
+    
+    return P2,cp
 
-    return P2, A
 
 
 def P_compr(m_dot, Cp12, f, P1, P2):
@@ -228,7 +249,7 @@ def thermal_efficiency(vin,vout,mdot,f,delta_hf):
 
 
 def propulsive_efficiency(vin,vout,mdot,f,T):
-    """
+    """ 
     Computes propulsive efficiency.
     """
     return 2*T*vin/(mdot*(1+f)*vout**2 - mdot * vin**2)
@@ -238,7 +259,7 @@ def corrected_massflow(mdot_ref,P1,Pref):
     """
     Computes corrected mass flow.
     """
-    return mdot_ref / (P1.p0/Pref.p0) / np.sqrt(Pref.T0/P1.T0)
+    return mdot_ref / (P1.p/Pref.p) / np.sqrt(Pref.T/P1.T)
 
 def true_massflow_from_corrected(mdot_corr,P1,Pref):
     """
@@ -394,3 +415,14 @@ def f(M,gamma):
 
 def F(M,gamma):
     return np.sqrt(gamma)* M * f(M,gamma)**(-(gamma + 1)/ (2 * (gamma - 1)))
+
+def set_Mach(P,gamma = 1.4, tol = 1e-4):
+    diff = np.inf
+    for _ in range(5) : 
+        P.M = P.v / np.sqrt(gamma * P.R * P.T)  #Mach number
+        P.set_total()  # sets total conditions with Mach (namely T0)
+        P.cp = findCp(P.T0,0) # finds CP from T0
+        P.get_gamma_from_cp() #gets the updated gamma 
+
+def interpolate(x,y):
+    return interp1d(x,y, kind='linear', bounds_error=False, fill_value='extrapolate')
