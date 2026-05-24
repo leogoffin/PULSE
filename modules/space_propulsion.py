@@ -187,6 +187,94 @@ def combustion_analysis(
         "R" : R,
     }
 
+
+def combustion_enthalpy(
+    total_mass_flow,
+    lower_heating_value,
+    mixture_ratio,
+    stoichiometric_mixture_ratio,
+    print_results=True,
+):
+    """
+    Compute combustion energy release from a propellant mixture based on total mass flow and mixture ratios.
+
+    Parameters
+    ----------
+    total_mass_flow : float
+        Total propellant mass flow [kg/s].
+    lower_heating_value : float
+        Fuel lower heating value [J/kg fuel].
+    mixture_ratio : float
+        Actual oxidizer-to-fuel mass ratio (O/F).
+    stoichiometric_mixture_ratio : float
+        Stoichiometric oxidizer-to-fuel mass ratio (O/F).
+    print_results : bool
+        If True, print a summary.
+
+    Returns
+    -------
+    dict containing:
+        - total_mass_flow
+        - mixture_ratio
+        - stoichiometric_mixture_ratio
+        - equivalence_ratio
+        - fuel_mass_flow
+        - oxidizer_mass_flow
+        - fuel_consumed
+        - oxidizer_consumed
+        - excess_fuel_mass_flow
+        - excess_oxidizer_mass_flow
+        - energy_released
+        - specific_enthalpy
+        - limiting_species
+    """
+
+    if total_mass_flow <= 0:
+        raise ValueError("total_mass_flow must be positive")
+    if lower_heating_value <= 0:
+        raise ValueError("lower_heating_value must be positive")
+    if mixture_ratio <= 0:
+        raise ValueError("mixture_ratio must be positive")
+    if stoichiometric_mixture_ratio <= 0:
+        raise ValueError("stoichiometric_mixture_ratio must be positive")
+
+    m_fuel = total_mass_flow / (1.0 + mixture_ratio)
+    m_ox = total_mass_flow - m_fuel
+
+    equivalence_ratio = stoichiometric_mixture_ratio / mixture_ratio
+
+    if mixture_ratio < stoichiometric_mixture_ratio:
+        limiting_species = "oxidizer"
+        oxidizer_consumed = m_ox
+        fuel_consumed = m_ox / stoichiometric_mixture_ratio
+        excess_fuel_mass_flow = max(0.0, m_fuel - fuel_consumed)
+        excess_oxidizer_mass_flow = 0.0
+    else:
+        limiting_species = "fuel"
+        fuel_consumed = m_fuel
+        oxidizer_consumed = m_fuel * stoichiometric_mixture_ratio
+        excess_fuel_mass_flow = 0.0
+        excess_oxidizer_mass_flow = max(0.0, m_ox - oxidizer_consumed)
+
+    energy_released = fuel_consumed * lower_heating_value
+    specific_enthalpy = energy_released / total_mass_flow
+
+    if print_results:
+        print("\n" + "=" * 70)
+        print("COMBUSTION ENTHALPY")
+        print("=" * 70)
+        print(f"Limiting species         : {limiting_species}")
+        print(f"Energy released          : {energy_released:.6f} J/s")
+        print(f"Specific enthalpy        : {specific_enthalpy:.6f} J/kg mix")
+        print("=" * 70 + "\n")
+
+    return {
+        "energy_released": energy_released,
+        "specific_enthalpy": specific_enthalpy,
+        "limiting_species": limiting_species,
+    }
+
+
 def charac_vel(P1):
     return np.sqrt(P1.gamma*P1.R*P1.T0)/P1.gamma * ((P1.gamma +1)/2)**((P1.gamma + 1)/(2*(P1.gamma-1)))
 
@@ -363,3 +451,6 @@ def pi_switch_nozzle_(pi1,pi2,ar1,ar2,M1,M2,gamma):
     d1 = ar1/pi1 * (1 + gamma * M1**2)
     d2 = ar2/pi2 * (1 + gamma * M2**2)
     return (ar1-ar2) / ((d1) - (d2))
+
+def stoich_mixture_ratio(M_fuel, nu_fuel, M_ox, nu_ox):
+    return (nu_ox*M_ox) / (nu_fuel*M_fuel)

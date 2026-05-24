@@ -143,7 +143,7 @@ class Air:
         elif self.T0 is not None : 
             self.h0 = self.T0* self.get_cp_from_gamma()
         
-        
+
 
     def set_static(self):
         """
@@ -234,7 +234,7 @@ class Air:
         P1.p0 = RR * self.p0
         P1.s = self.s
         P1.h0 = self.h0
-        P1.set_static()
+        P1.gamma = self.gamma
         if get_pi_R : 
             return P1, P1.p0/self.p
         return P1

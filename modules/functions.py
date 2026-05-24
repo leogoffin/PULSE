@@ -256,6 +256,11 @@ def propulsive_efficiency(vin,vout,mdot,f,T):
     """
     return 2*T*vin/(mdot*(1+f)*vout**2 - mdot * vin**2)
 
+def thermal_efficiency_turbofan(m_dot_p, m_dot_f, m_dot_s, v_eff_p, v_eff_s, m_dot_a, v_a, delta_hf):
+    return (((m_dot_p + m_dot_f)*v_eff_p**2 + m_dot_s*v_eff_s**2 - m_dot_a*v_a**2) / (2*m_dot_f*delta_hf))
+
+def propulsive_efficiency_turbofan(Thrust_tot, v_a, m_dot_p, m_dot_f, m_dot_s, v_eff_p, v_eff_s, m_dot_a):
+    return ((2*Thrust_tot*v_a) / ((m_dot_p + m_dot_f)*v_eff_p**2 + m_dot_s*v_eff_s**2 - m_dot_a*v_a**2))
 
 def corrected_massflow(mdot_ref,P1,Pref):
     """
@@ -405,6 +410,7 @@ def PropulsiveEff(m_dot_in, m_dot_f, v_j, v_1, T):
     eta_p = (2*T*v_1) / ((m_dot_in + m_dot_f) * v_j**2 - m_dot_in * v_1**2 )
     return eta_p
 
+
 def ThermalEff_from_Power(m_dot_a, v_j, v_1, P):
     eta_th = 0.5 * m_dot_a * (v_j**2 - v_1**2) / P
     return eta_th
@@ -428,3 +434,16 @@ def set_Mach(P,gamma = 1.4, tol = 1e-4):
 
 def interpolate(x,y):
     return interp1d(x,y, kind='linear', bounds_error=False, fill_value='extrapolate')
+
+
+def effective_velocity(Pe, mdot, p_a, A_e):
+    """
+    Effective exhaust velocity.
+
+    Returns
+    -------
+    float
+        Effective exhaust velocity (m/s)
+    """
+    return Pe.v + (Pe.p - p_a) * A_e / mdot
+
