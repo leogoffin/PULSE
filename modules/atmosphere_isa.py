@@ -142,6 +142,8 @@ class Air:
             self.h0 = self.h + 0.5 * self.v**2
         elif self.T0 is not None : 
             self.h0 = self.T0* self.get_cp_from_gamma()
+        
+        
 
     def set_static(self):
         """

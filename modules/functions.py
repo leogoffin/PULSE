@@ -162,7 +162,7 @@ def adiabatic_convergent_nozzle(P1,m_dot,f,pa,gamma13 = 1.37,tol = 1e-5,convdiv 
 
         else:
             choked = True
-            P3.p = P3.p0 / NPR_star
+            P3.p = P3.p0 / (1 + (gamma13-1)/2)**(gamma13/(gamma13-1))
             P3.T = P3.T0 / (1 + (gamma13-1)/2)
             P3.M = 1
 
@@ -171,6 +171,7 @@ def adiabatic_convergent_nozzle(P1,m_dot,f,pa,gamma13 = 1.37,tol = 1e-5,convdiv 
             diff = abs(new_gamma - gamma13)/gamma13
             gamma13 = new_gamma
 
+    P3.gamma = gamma13
     P3.a = np.sqrt(P3.gamma*P3.R*P3.T)
     P3.v = P3.M*P3.a
     P3.rho0 = P3.p0 / (P3.R * P3.T0)
@@ -178,6 +179,7 @@ def adiabatic_convergent_nozzle(P1,m_dot,f,pa,gamma13 = 1.37,tol = 1e-5,convdiv 
     P3.s = P1.s + P3.cp*np.log(P3.T0/P1.T0) - P3.R*np.log(P3.p0/P1.p0)
     P3.rho = P3.p/P3.R/P3.T
     A = m_dot/P3.rho/P3.v
+
     return P3, choked, NPR, A
 
 def iterate_M_nozzle(P1,pa,f,gamma = 1.39,tol = 1e-4):
