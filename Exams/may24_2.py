@@ -18,16 +18,18 @@ moles_O2 = O2_mf / MO2
 H2_MF = moles_H2/(moles_H2+moles_O2)
 O2_MF = moles_O2/(moles_H2+moles_O2)
 
+
 results = combustion_analysis(
     species_in=["H2", "O2"],nu_in=[2, 1],M_in=[MH2, MO2],quantities_in=[H2_mf, O2_mf],
     species_out=["H2O"],nu_out=[2],M_out=[MH2O],
 )
 
 MR_star = stoich_mixture_ratio(2,2,32,1)
-print(MR_star)
+print(1/2*MO2/MH2)
+
+
 
 mdot = 1
 res = combustion_enthalpy(mdot,120e6,MR,MR_star,print_results=True)
-
 dT = res["energy_released"]/Cp/mdot
 print(dT+ 288.15)

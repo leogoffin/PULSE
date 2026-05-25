@@ -225,6 +225,22 @@ class Air:
         required = [self.rho0, self.T0, self.p0, self.M]
         return all(v is not None for v in required)
 
+    def Ram_recovery(self,verbose = False):
+        """
+        Returns the total pressure ratio across a normal shock:
+        p_tot_after / p_tot_before
+        """
+        gamma = self.gamma
+        term1 = ((gamma + 1) * self.M**2) / ((gamma - 1) * self.M**2 + 2)
+        term2 = (gamma + 1) / (2 * gamma * self.M**2 - (gamma - 1))
+        
+        pi_ns = term1**(gamma / (gamma - 1)) * term2**(1 / (gamma - 1))
+        
+        if verbose:
+            print(f"Value of pi_ns = p° after shock / p° before shock = {pi_ns:.5f} [-]")
+
+        return pi_ns
+
     def RAM(self,RR = 1,get_pi_R = True):
         P1 = Air(self.v)
         P1.T0 = self.T0

@@ -37,6 +37,7 @@ for m_ratio in mdot_ratios :
     eta_is = eta_is_from_eta_poly(pi_f(m_ratio),eta_p(m_ratio))
     P2,Pc,cp = compr.with_eta(P1,mdot,pi_f(m_ratio),eta_is)
     P3,choked,NPR,A = adiabatic_convergent_nozzle(P2,mdot,0,P1.p)
+    
     T = simple_thrust(mdot,0,P1,P3,A)
     if T > Tmax : 
         Tmax = T
@@ -44,6 +45,7 @@ for m_ratio in mdot_ratios :
         mdot_opt = mdot * (BPR+1)/BPR
         A_opt = A
         P_opt = Pc
+
 
 print(f"Fan Power                      : {P_opt/1e6:.2f} MW")
 print(f"Thrust                         : {Tmax:.0f} N")

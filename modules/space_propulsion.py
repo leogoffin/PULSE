@@ -2,17 +2,20 @@ import numpy as np
 from modules.convergences import bisection
 from modules.atmosphere_isa import *
 
-def combustion_analysis(
-    species_in,
-    nu_in,
-    M_in,
-    quantities_in,
-    species_out,
-    nu_out,
-    M_out,
-    basis="mass_flow",
-    print_results=True
-):
+def StaticPressure(p0, gamma, M):
+    return p0 * f(M, gamma)**(-gamma/(gamma - 1))
+
+
+def Static_Temp(T0, gamma, M):
+    return T0 / f(M, gamma)
+
+
+def SpeedSound(gamma, T, R):
+    return np.sqrt(gamma * R * T)
+
+def combustion_analysis(species_in,nu_in,M_in,quantities_in,
+                        species_out,nu_out,M_out,
+                        basis="mass_flow",print_results=True):
     """
     Generic combustion / chemical reaction analyzer.
 
@@ -229,15 +232,6 @@ def combustion_enthalpy(
         - limiting_species
     """
 
-    if total_mass_flow <= 0:
-        raise ValueError("total_mass_flow must be positive")
-    if lower_heating_value <= 0:
-        raise ValueError("lower_heating_value must be positive")
-    if mixture_ratio <= 0:
-        raise ValueError("mixture_ratio must be positive")
-    if stoichiometric_mixture_ratio <= 0:
-        raise ValueError("stoichiometric_mixture_ratio must be positive")
-
     m_fuel = total_mass_flow / (1.0 + mixture_ratio)
     m_ox = total_mass_flow - m_fuel
 
@@ -264,8 +258,8 @@ def combustion_enthalpy(
         print("COMBUSTION ENTHALPY")
         print("=" * 70)
         print(f"Limiting species         : {limiting_species}")
-        print(f"Energy released          : {energy_released:.6f} J/s")
-        print(f"Specific enthalpy        : {specific_enthalpy:.6f} J/kg mix")
+        print(f"Energy released          : {energy_released:.3e} J/s")
+        print(f"Specific enthalpy        : {specific_enthalpy:.3e} J/kg mix")
         print("=" * 70 + "\n")
 
     return {
@@ -301,7 +295,14 @@ def A_nozzle(P1,mdot,M = None,gamma = None):
         M = P1.M
     if gamma is None : 
         gamma = P1.gamma
-    return mdot/(P1.p0/(np.sqrt(P1.R*P1.T0))*F(M,gamma))
+ 
+    T_star = Static_Temp(P1.T0, gamma, M)
+    p_star = StaticPressure(P1.p0, gamma, M)
+    a_t = SpeedSound(gamma, T_star,P1.R)
+    rho_t = p_star / (P1.R * T_star)
+    A_t = mdot / (rho_t * a_t)
+
+    return A_t
 
 def M_nozzle(P1,mdot,A,gamma = None,Mmin = 1,Mmax = 6,tol = 1e-4):
     if gamma is None : 

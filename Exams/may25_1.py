@@ -58,17 +58,21 @@ P6w = cc.with_f(P5,Pref.T,mdot,delta_hf,fab,fin = fcc,eta_cc = eta_ab, pi_cc = p
 
 #G Exhaust nozzle
 
-P8d, NPR,Atd = adiabatic_convdiv_nozzle(P5,mdot,f_tot,P0.p)
-Td = simple_thrust(mdot,f_tot,P0,P8d,Atd)
+P8d, NPR,Ad = adiabatic_convdiv_nozzle(P5,mdot,f_tot,P0.p)
+Td = simple_thrust(mdot,f_tot,P0,P8d,Ad)
 
-P8w, NPR,Atw = adiabatic_convdiv_nozzle(P6w,mdot,f_tot,P0.p)
-Tw = simple_thrust(mdot,f_tot,P0,P8w,Atw)
+P8w, NPR,Aw = adiabatic_convdiv_nozzle(P6w,mdot,f_tot,P0.p)
+Tw = simple_thrust(mdot,f_tot,P0,P8w,Aw)
+
+# Calculate throat areas (at Mach 1, sonic condition)
+Atd = A_nozzle(P5, mdot*(1+fcc), M=1, gamma=P5.gamma)
+Atw = A_nozzle(P6w, mdot*(1+f_tot), M=1, gamma=P6w.gamma)
 
 Qd = delta_hf*mdotfcc
 Qw = delta_hf*(mdotfcc+mdotfab)
 
-SFCd = Qd/Td
-SFCw = Qw/Tw
+SFCd = mdotfcc/Td
+SFCw = (mdotfcc+mdotfab)/Tw
 
 eta_td = thermal_efficiency(P0.v,P8d.v,mdot,fcc,delta_hf)
 eta_tw = thermal_efficiency(P0.v,P8w.v,mdot,f_tot,delta_hf)
@@ -88,6 +92,7 @@ P8d.sprint(8, "wet")
 print('-'*50)
 
 print(f"Thrust (dry)                : {Td:.0f} N")
+print(f"Exhaust area (dry)          : {Ad:.3f} m²\n")
 print(f"Throat area (dry)           : {Atd:.3f} m²\n")
 print(f"SFC (dry)                   : {SFCd*kgN_to_kghDaN:.2f} kg/DaN.h")
 print(f"Thermal efficiency (dry)    : {eta_td:.3f}")
@@ -97,6 +102,7 @@ print(f"Overall efficiency (dry)    : {eta_pd*eta_td:.3f}")
 print('-'*50)
 
 print(f"Thrust (wet)                : {Tw:.0f} N")
+print(f"Exhaust area (wet)          : {Aw:.3f} m²\n")
 print(f"Throat area (wet)           : {Atw:.3f} m²\n")
 print(f"SFC (wet)                   : {SFCw*kgN_to_kghDaN:.2f} kg/DaN.h")
 print(f"Thermal efficiency (wet)    : {eta_tw:.3f}")

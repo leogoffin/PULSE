@@ -146,7 +146,6 @@ def adiabatic_convergent_nozzle(P1,m_dot,f,pa,gamma13 = 1.37,tol = 1e-5,convdiv 
     P3.cp = findCp(P3.T0,f)
     P3.get_gamma_from_cp()
     NPR_star = (1 + (P3.gamma-1)/2)**(P3.gamma/(P3.gamma-1))
-
     diff = np.inf
 
     while diff > tol:
