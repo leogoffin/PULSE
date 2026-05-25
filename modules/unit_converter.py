@@ -82,50 +82,62 @@ psi_to_atm = 0.0680459639
 # ------------------------------------------------------------
 
 def C_to_F(C):
+    """Compute C to F."""
     return (C * 9.0 / 5.0) + 32.0
 
 
 def F_to_C(F):
+    """Compute F to C."""
     return (F - 32.0) * 5.0 / 9.0
 
 
 def C_to_K(C):
+    """Compute C to K."""
     return C + 273.15
 
 
 def K_to_C(K):
+    """Compute K to C."""
     return K - 273.15
 
 
 def F_to_K(F):
+    """Compute F to K."""
     return (F - 32.0) * 5.0 / 9.0 + 273.15
 
 
 def K_to_F(K):
+    """Compute K to F."""
     return (K - 273.15) * 9.0 / 5.0 + 32.0
 
 
 def C_to_R(C):
+    """Compute C to R."""
     return (C + 273.15) * 9.0 / 5.0
 
 
 def R_to_C(R):
+    """Compute R to C."""
     return (R - 491.67) * 5.0 / 9.0
 
 
 def F_to_R(F):
+    """Compute F to R."""
     return F + 459.67
 
 
 def R_to_F(R):
+    """Compute R to F."""
     return R - 459.67
 
 
 def K_to_R(K):
+    """Compute K to R."""
     return K * 9.0 / 5.0
 
 
 def R_to_K(R):
+    """Compute R to K."""
     return R * 5.0 / 9.0
 
 # ------------------------------------------------------------

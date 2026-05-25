@@ -132,7 +132,7 @@ def with_eta_poly(P1, m_dot, pi_c, eta_p,P2=None, v=0, tol=1e-5):
     while rel_diff > tol:
 
         P2_T0s = P1.T0 * pi_c**((gamma - 1) / gamma)
-        eta_c_is = eta_is_from_eta_poly(pi_c,eta_p,gamma)
+        eta_c_is = get_eta_is(pi_c,eta_p,gamma)
         P2.T0 = (P2_T0s - P1.T0) / eta_c_is + P1.T0
         Cp = findCp(av(P1.T0, P2.T0), 0)
         gamma = get_gamma(Cp)
@@ -150,11 +150,13 @@ def with_eta_poly(P1, m_dot, pi_c, eta_p,P2=None, v=0, tol=1e-5):
     return P2, m_dot * Cp * (P2.T0 - P1.T0), Cp
 
 def get_eta_poly(P1,P2,pi_c,f=0):
+    """Return eta poly."""
     Cp12 = findCp(av(P1.T0,P2.T0),f)
     g = get_gamma(Cp12)
     return (g-1)/g * np.log(pi_c)/np.log(P2.T0/P1.T0)
 
 def isentropic_temp(T0a,pi_c,gamma):
+    """Compute isentropic temp."""
     return T0a* pi_c**((gamma-1)/gamma)
 
 
@@ -256,6 +258,7 @@ def IterateMatchingFan_and_SecondaryNozzle(P1,Pref, pi_fs_values, eta_fs_values,
     f_pi  = interp1d(m_dot_star_values, pi_fs_values,  kind='linear', bounds_error=False, fill_value='extrapolate')
 
     def nozzle_mass_flow(m_dot_star):
+        """Compute nozzle mass flow."""
         pi_fs  = float(f_pi(m_dot_star))
         eta_fs = float(f_eta(m_dot_star))
         p_2_tot = pi_fs * P1.p0
@@ -301,3 +304,30 @@ def IterateMatchingFan_and_SecondaryNozzle(P1,Pref, pi_fs_values, eta_fs_values,
     P2,Pc,Cp12 = with_eta(P1,m_dot_real,pi_fs_conv,eta_fs_conv)
 
     return m_dot_real, m_dot_s_conv, pi_fs_conv, eta_fs_conv, P2
+
+
+def get_eta_is(pi_c, eta_poly, gamma=1.4):
+    """
+    Converts compressor polytropic efficiency into overall
+    isentropic efficiency.
+
+    Relation used:
+
+        eta_is =
+            (pi_c^((gamma-1)/gamma) - 1)
+            --------------------------------
+            (pi_c^((gamma-1)/(gamma*eta_poly)) - 1)
+
+    Args:
+        pi_c (float): Compressor pressure ratio.
+        eta_poly (float): Polytropic efficiency.
+        gamma (float, optional): Specific heat ratio. 
+
+    Returns:
+        float:
+            Isentropic efficiency.
+    """
+
+    a = (gamma - 1) / gamma
+
+    return (pi_c**a - 1) / (pi_c**(a / eta_poly) - 1)

@@ -1,0 +1,58 @@
+
+
+
+print('-'*50)
+print(f"Fan pressure ratio          : {pi_f:.2f}")
+print(f"Nozzle choked ?             : {choked}")
+print(f"Thrust (dry)                : {Td:.0f} N")
+print(f"Throat area (dry)           : {Ad:.3f} m²\n")
+print(f"SFC (dry)                   : {SFCd*kgN_to_kghDaN:.2f} kg/DaN.h")
+print(f"Thermal efficiency (dry)    : {eta_td:.3f}")
+print(f"Propulsive efficiency (dry) : {eta_pd:.3f}")
+print(f"Overall efficiency (dry)    : {eta_pd*eta_td:.3f}")
+
+print(f"Thrust (wet)                : {Tw:.0f} N")
+print(f"Exhaust area (wet)          : {Aw:.3f} m²\n")
+print(f"Throat area (wet)           : {Atw:.3f} m²\n")
+print(f"SFC (wet)                   : {SFCw*kgN_to_kghDaN:.2f} kg/DaN.h")
+print(f"Thermal efficiency (wet)    : {eta_tw:.3f}")
+print(f"Propulsive efficiency (wet) : {eta_pw:.3f}")
+print(f"Overall efficiency (wet)    : {eta_pw*eta_tw:.3f}")
+print('-'*50)
+
+
+print("="*50)
+print(f"Total Thrust                    : {T:.0f} N \n")
+print(f"Thrust (primary)                : {Tp:.0f} N ({Tp/T*100:.0f} %)")
+print(f"Choked nozzle ? (primary)       : {chokedp}")
+print(f"Thrust (secondary)              : {Ts:.0f} N ({Ts/T*100:.0f} %)")
+print(f"Choked nozzle ? (secondary)     : {chokeds}\n")
+
+print(f"SFC                    : {SFC*kgN_to_kghDaN:.2f} kg/DaN.h")
+print(f"Thermal efficiency     : {eta_T:.3f}")
+print(f"Propulsive efficiency  : {eta_p:.3f}")
+print(f"Overall efficiency     : {eta_p*eta_T:.3f}")
+print("="*50)
+
+print(f"Fan Power                 : {Pc/1e6:.2f} MW")
+print(f"Thrust                    : {T:.0f} N")
+print(f"Exhaust area              : {A:.3f} m²")   
+print(f"Relative design flow rate : {m_ratio:.3f}")
+print(f"True mas  flow rate       : {mdot:.3f} kg/s")
+
+print(f"20 km Altitude")
+print(f"Exhaust Mach : {Pe20.M:.2f}")
+print(f"Expansion ratio : {a_ratio20:.2f}")
+print(f"Thrust Coefficient : {CT:.3f}")
+
+P1.sprint(1)
+P2.sprint(2)
+P3.sprint(3)
+P4.sprint(4)
+P5.sprint(5)
+P6.sprint(6)
+P6.sprint(6)
+P7.sprint(7)
+P8.sprint(8)
+P9d.sprint(9)
+P10d.sprint(10)

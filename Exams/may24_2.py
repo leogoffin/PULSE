@@ -25,11 +25,8 @@ results = combustion_analysis(
 )
 
 MR_star = stoich_mixture_ratio(2,2,32,1)
-print(1/2*MO2/MH2)
 
-
-
-mdot = 1
+mdot = 10
 res = combustion_enthalpy(mdot,120e6,MR,MR_star,print_results=True)
-dT = res["energy_released"]/Cp/mdot
-print(dT+ 288.15)
+dT = res["specific_enthalpy"]/Cp
+print(f"Exhaust temperature : {dT+ 288.15:.0f} K")

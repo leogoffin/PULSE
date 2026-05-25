@@ -35,6 +35,7 @@ def Pcontrol(ref, measure, last_errors=None, Kp=1.0, tol=1e-5):
     return False, output, last_errors
 
 def secant(xn,xn_1,fxn,fxn_1,Min= None,Max= None):
+    """Compute secant."""
     new_xn = xn - fxn * (xn-xn_1)/(fxn-fxn_1)
     if Min is not None :
         new_xn = max(Min,new_xn)

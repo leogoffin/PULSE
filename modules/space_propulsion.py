@@ -3,14 +3,17 @@ from modules.convergences import bisection
 from modules.atmosphere_isa import *
 
 def StaticPressure(p0, gamma, M):
+    """Compute StaticPressure."""
     return p0 * f(M, gamma)**(-gamma/(gamma - 1))
 
 
 def Static_Temp(T0, gamma, M):
+    """Compute Static Temp."""
     return T0 / f(M, gamma)
 
 
 def SpeedSound(gamma, T, R):
+    """Compute SpeedSound."""
     return np.sqrt(gamma * R * T)
 
 def combustion_analysis(species_in,nu_in,M_in,quantities_in,
@@ -86,10 +89,8 @@ def combustion_analysis(species_in,nu_in,M_in,quantities_in,
 
     molar_out = nu_out * extent
 
-    # Remaining reactants (excess species)
     molar_remaining = molar_in - nu_in * extent
 
-    # Add remaining reactants to output if non-zero
     extra_species = []
     extra_molar = []
     extra_mass = []
@@ -123,14 +124,9 @@ def combustion_analysis(species_in,nu_in,M_in,quantities_in,
 
     if print_results:
 
-        # Chemical reaction
-        reaction_in = " + ".join(
-            [f"{nu_in[i]:g} {species_in[i]}" for i in range(len(species_in))]
-        )
+        reaction_in = " + ".join([f"{nu_in[i]:g} {species_in[i]}" for i in range(len(species_in))])
 
-        reaction_out = " + ".join(
-            [f"{nu_out[i]:g} {species_out[i]}" for i in range(len(species_out))]
-        )
+        reaction_out = " + ".join([f"{nu_out[i]:g} {species_out[i]}" for i in range(len(species_out))])
 
         print("\n" + "=" * 70)
         print("CHEMICAL REACTION")
@@ -270,20 +266,25 @@ def combustion_enthalpy(
 
 
 def charac_vel(P1):
+    """Compute charac vel."""
     return np.sqrt(P1.gamma*P1.R*P1.T0)/P1.gamma * ((P1.gamma +1)/2)**((P1.gamma + 1)/(2*(P1.gamma-1)))
 
 def get_R(M):
+    """Return R."""
     R_star = 8.31
     return R_star/M*1000
 
 def f(M,gamma):
+    """Return the ideal gas flow function f(M, gamma)."""
     return 1 + (gamma-1)/2 * M**2
 
 def F(M,gamma):
+    """Return the isentropic flow function F(M, gamma)."""
     return np.sqrt(gamma)* M * f(M,gamma)**(-(gamma + 1)/ (2 * (gamma - 1)))
 
 
 def mdot_nozzle(P1,A,M = None,gamma = None):
+    """Compute mdot nozzle."""
     if M is None : 
         M = P1.M
     if gamma is None : 
@@ -291,6 +292,7 @@ def mdot_nozzle(P1,A,M = None,gamma = None):
     return P1.p0*A/(np.sqrt(P1.R*P1.T0))*F(M,gamma)
     
 def A_nozzle(P1,mdot,M = None,gamma = None):
+    """Compute A nozzle (throat)."""
     if M is None : 
         M = P1.M
     if gamma is None : 
@@ -304,7 +306,9 @@ def A_nozzle(P1,mdot,M = None,gamma = None):
 
     return A_t
 
-def M_nozzle(P1,mdot,A,gamma = None,Mmin = 1,Mmax = 6,tol = 1e-4):
+
+def M_nozzle(P1,mdot,A,gamma = None,Mmin = 1,Mmax = 10,tol = 1e-4):
+    """Compute M nozzle."""
     if gamma is None : 
         gamma = P1.gamma
 
@@ -312,6 +316,7 @@ def M_nozzle(P1,mdot,A,gamma = None,Mmin = 1,Mmax = 6,tol = 1e-4):
     b = Mmax
 
     def error(c):
+        """Return the error for the given input."""
         return  A_nozzle(P1, mdot, c, gamma) - A
     
     fa = error(a)
@@ -321,7 +326,12 @@ def M_nozzle(P1,mdot,A,gamma = None,Mmin = 1,Mmax = 6,tol = 1e-4):
     print(f"found root at {c:.3e} - error : {error(c):.3e}")
     return c
 
+def pressure_ratio(M, gamma):
+    """Return total-to-static pressure ratio p0/p."""
+    return f(M, gamma)**(gamma/(gamma - 1))
+
 def A_ratio_nozzle(P1,M = None,gamma = None):
+    """Compute A ratio nozzle."""
     if M is None : 
         M = P1.M
     if gamma is None : 
@@ -330,6 +340,7 @@ def A_ratio_nozzle(P1,M = None,gamma = None):
     return F(1, gamma) / F(M, gamma)
     
 def M_nozzle2(P1,A_ratio,gamma = None, Mmin = 1,Mmax = 6,tol = 1e-4):
+    """Compute M nozzle."""
     if gamma is None : 
         gamma = P1.gamma
 
@@ -337,6 +348,7 @@ def M_nozzle2(P1,A_ratio,gamma = None, Mmin = 1,Mmax = 6,tol = 1e-4):
     b = Mmax
 
     def error(c):
+        """Return the error for the given input."""
         return  A_ratio_nozzle(P1, c, gamma) - A_ratio
     
     c,its =  bisection(error,a,b)
@@ -346,15 +358,19 @@ def M_nozzle2(P1,A_ratio,gamma = None, Mmin = 1,Mmax = 6,tol = 1e-4):
 
 
 def space_thrust(mdot,Pe,Ae):
+    """Compute space thrust."""
     return mdot*Pe.v + Pe.p*Ae
 
 def mdot_from_T(T,Pe,Ae):
+    """Compute mdot from T."""
     return (T-Pe.p*Ae)/Pe.v
 
 def get_c_star(Pr):
+    """Return c star."""
     return np.sqrt(Pr.R*Pr.T0)/F(1,Pr.gamma)
 
 def exhaust_cds(P1,Me):
+    """Compute exhaust cds."""
     Pe = Air(R = P1.R)
 
     Pe.T = P1.T0/f(Me,P1.gamma)
@@ -362,6 +378,7 @@ def exhaust_cds(P1,Me):
     Pe.v = Me*np.sqrt(P1.gamma*Pe.R*Pe.T)
     Pe.M = Me
     Pe.a = np.sqrt(P1.gamma*Pe.R*Pe.T)
+    Pe.T0 = P1.T0
     if P1.p0 is None : 
         p_ratio = f(Me,P1.gamma)**(-P1.gamma/(P1.gamma-1)) 
         return Pe,p_ratio
@@ -369,7 +386,29 @@ def exhaust_cds(P1,Me):
         Pe.p = P1.p0/f(Me,P1.gamma)**(P1.gamma/(P1.gamma-1))   
     return Pe
 
+def vacuum_operation(Pe,ptot,mdot,A_e,A_t,g = 9.81,doprint = False):
+    T_vac = space_thrust(mdot,Pe,A_e)
+    Isp_vac = T_vac/mdot/g
+    c_T_vac = T_vac/ptot/A_t
+    if doprint:
+        print("\nVacuum operation")
+        print("-----------------------")
+        print(f"Exit static pressure        : 0 Pa")
+        print(f"Thrust                      : {T_vac:.6f} N")
+        print(f"Specific impulse            : {Isp_vac:.6f} s")
+        print(f"Thrust coefficient          : {c_T_vac:.3f}")
+    return 0, T_vac, Isp_vac, c_T_vac
+
+def space_exhaust(P1,mdot,A_ratio):
+    c_star = charac_vel(P1)
+    A_t = A_nozzle(P1,mdot,1)
+    A_e = A_t * A_ratio
+    Me = M_nozzle2(P1,A_ratio)
+    Pe = exhaust_cds(P1,Me)
+    return c_star,A_t,A_e,Me,Pe
+
 def fully_expanded(Pe,ptot,mdot,A_e,A_t,K=2.5, g = 9.81, doprint=False):
+    """Compute fully expanded."""
     pa = K*Pe.p
     T = mdot*Pe.v + Pe.p * (1-K)*A_e
     Isp = T/mdot/g
@@ -379,12 +418,13 @@ def fully_expanded(Pe,ptot,mdot,A_e,A_t,K=2.5, g = 9.81, doprint=False):
         print("-----------------------")
         print(f"Ambient pressure factor (K) : {K:.4f}")
         print(f"Exit static pressure        : {pa:.3f} Pa")
-        print(f"Thrust                     : {T:.6f} N")
-        print(f"Specific impulse           : {Isp:.6f} s")
-        print(f"Thrust coefficient         : {c_T:.3f}")
+        print(f"Thrust                      : {T:.6f} N")
+        print(f"Specific impulse            : {Isp:.6f} s")
+        print(f"Thrust coefficient          : {c_T:.3f}")
     return pa,T,Isp,c_T
 
 def adapted_operation(Pe,ptot,mdot,A_t,K=2.5, g = 9.81, doprint=False):
+    """Compute adapted operation."""
     pa = Pe.p
     T = mdot*Pe.v
     Isp = T/mdot/g
@@ -393,65 +433,143 @@ def adapted_operation(Pe,ptot,mdot,A_t,K=2.5, g = 9.81, doprint=False):
         print("\nADAPTED NOZZLE OPERATION")
         print("-------------------------")
         print(f"Exit static pressure        : {pa:.3f} Pa")
-        print(f"Thrust                     : {T:.6f} N")
-        print(f"Specific impulse           : {Isp:.6f} s")
-        print(f"Thrust coefficient         : {c_T:.3f}")
+        print(f"Thrust                      : {T:.6f} N")
+        print(f"Specific impulse            : {Isp:.6f} s")
+        print(f"Thrust coefficient          : {c_T:.3f}")
     return pa,T,Isp,c_T
 
 def M_from_pressure_ratio(p0, p, gamma=1.4):
+    """Compute M from pressure ratio."""
     return np.sqrt(2/(gamma-1)* ((p0/p)**((gamma-1)/gamma) - 1))
 
-def ground_operation(P1,mdot,A_t,K=2.5, g = 9.81, doprint=False):
-    P = Air(0)
-    P.set_isa(0)
-    Pe = Air(R = P1.R)
-    Pe.gamma = P1.gamma
-    Pe.p = P.p/K
-    Pe.M = M_from_pressure_ratio(P1.p0, P.p, P1.gamma)
-    Pe.T = P1.T0 / f(Pe.M, P1.gamma)
-    Pe.v = Pe.M * np.sqrt(P1.gamma * P1.R * Pe.T)
-    Pe.rho = Pe.R*Pe.T/Pe.p
-    Asep = mdot/Pe.v/Pe.rho
-    T = mdot*Pe.v + (Pe.p - P.p)*Asep
-    Isp = T/mdot/g
-    c_T = T/P1.p0/A_t
+def ground_operation(Pe_star,ptot, mdot, A_e, A_t,K=2.5,g=9.81,doprint=False):
+    """
+    Ground operation of a rocket nozzle with possible flow separation.
+
+    Args:
+        P1   : chamber total state
+        mdot : mass flow rate [kg/s]
+        A_t  : throat area [m²]
+        A_e  : geometric exit area [m²]
+        K    : separation criterion factor
+    """
+
+    Pa = Air(0)
+    Pa.set_isa(0)
+
+    gamma = Pe_star.gamma
+    R = Pe_star.R
+
+    separated = Pe_star.p < Pa.p / K
     if doprint:
         print("\nGROUND OPERATION")
         print("----------------")
-        print(f"Separation area            : {Asep:.4f} m²")
-        print(f"Exit static pressure       : {Pe.p:.3f} Pa")
-        print(f"Thrust                     : {T:.6f} N")
-        print(f"Specific impulse           : {Isp:.6f} s")
-        print(f"Thrust coefficient         : {c_T:.3f}")
+        print(f"Separated flow              : {separated}")
 
-    return Pe,T,Isp,c_T
+    if separated:
+        p_sep = Pa.p / K
+        M_sep = M_from_pressure_ratio(ptot, p_sep, gamma)
+        ar_sep = A_ratio_nozzle(0,M_sep, gamma)
+        A_sep = ar_sep * A_t
+        T_sep = Pe_star.T0 / f(M_sep, gamma)
+        a_sep = np.sqrt(gamma * R * T_sep)
+        v_sep = M_sep * a_sep
+        rho_sep = p_sep / (R * T_sep)
+
+        T = mdot * v_sep + (p_sep - Pa.p) * A_sep
+        Isp = T / (mdot * g)
+        c_T = T / (ptot * A_t)
+        if doprint:
+            print(f"Exit Mach                   : {M_sep:.4f}")
+            print(f"Exit pressure               : {p_sep:.3f} Pa")
+            print(f"Effective exit area         : {A_sep:.6f} m²")
+
+    else :
+        pe = Pe_star.p
+        Me = Pe_star.M
+        A_sep = A_e
+        Te = Pe_star.T / f(Me, gamma)
+        ae = np.sqrt(gamma * R * Te)
+        ve = Me * ae
+        rhoe = pe / (R * Te)
+
+        T = mdot * ve + (pe - Pa.p) * A_sep
+        Isp = T / (mdot * g)
+        c_T = T / (ptot * A_t)
+        if doprint:
+            print(f"Exit Mach                   : {M_sep:.4f}")
+            print(f"Exit pressure               : {p_sep:.3f} Pa")
+            print(f"Effective exit area         : {A_sep:.6f} m²")
+
+    if doprint:
+        print(f"Thrust                      : {T:.6f} N")
+        print(f"Specific impulse            : {Isp:.6f} s")
+        print(f"Thrust coefficient          : {c_T:.6f}")
+
+    return Pa.p,T, Isp, c_T
 
 
 def get_cT(P_ratio,A_ratio,gamma,Me,pa = 0):
+    """Return cT."""
     if pa == 0 :
         return A_ratio/P_ratio * (1 +gamma*Me**2)
     else : 
         return A_ratio/P_ratio * (gamma*Me**2)
 
 def At_from_cT(T,cT,p0):
+    """Compute At from cT."""
     return T/cT/p0
 
 def get_Isp_with_cT_star(cT,cstar,g=9.81):
+    """Return Isp with cT star."""
     return cT*cstar/g
 
 def mdot_from_Isp(T,Isp,g = 9.81):
+    """Compute mdot from Isp."""
     return T/Isp/g
 
 def V_perfect_gas(m,Pr):
+    """Compute V perfect gas."""
     return m*Pr.R*Pr.T0/Pr.p0
 
 def Mach_from_pratio(pi,gamma):
+    """Compute Mach from pratio."""
     return np.sqrt(2/(gamma-1)*(pi**((gamma-1)/gamma)-1))
 
 def pi_switch_nozzle_(pi1,pi2,ar1,ar2,M1,M2,gamma):
+    """Compute pi switch nozzle ."""
     d1 = ar1/pi1 * (1 + gamma * M1**2)
     d2 = ar2/pi2 * (1 + gamma * M2**2)
     return (ar1-ar2) / ((d1) - (d2))
 
 def stoich_mixture_ratio(M_fuel, nu_fuel, M_ox, nu_ox):
+    """Compute stoich mixture ratio."""
     return (nu_ox*M_ox) / (nu_fuel*M_fuel)
+
+
+
+"""
+def IterateCp_Tc(f_CO2, f_H2O, f_O2, MR, MR_star, delta_hf, T_r = 288.15, T_c = 3000):
+
+    if MR>MR_star: 
+         Q = (1 / (MR_star * (MR + 1))) * delta_hf
+    else :
+         Q = (MR / (MR_star * (MR + 1))) * delta_hf
+    
+    Cp_mix = (f_CO2 * get_cp('CO2', (T_c + T_r) / 2)
+            + f_H2O * get_cp('H2O', (T_c + T_r) / 2)
+            + f_O2  * get_cp('O2',  (T_c + T_r) / 2))
+
+    while error > 1e-5:
+        T_c_old = T_c
+        T_mid   = (T_c + T_r) / 2
+
+        Cp_mix = (f_CO2 * get_cp('CO2', T_mid)
+                + f_H2O * get_cp('H2O', T_mid)
+                + f_O2  * get_cp('O2',  T_mid))
+
+        T_c    = T_r + Q / Cp_mix
+        error  = np.abs((T_c - T_c_old) / T_c_old)
+
+    return T_c, Cp_mix
+"""

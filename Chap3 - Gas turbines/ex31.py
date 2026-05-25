@@ -14,11 +14,13 @@ T_a = F_to_K(60)
 p_a = 14.7 *psi_to_Pa
 
 def polytropic_eff(pi_c,eta,gamma = 1.4,Ta = None,T0b = None):
+    """Compute polytropic eff."""
     num = np.log10(pi_c**((gamma-1)/gamma))
     den = np.log10((pi_c**((gamma-1)/gamma)-1)/eta + 1)
     return num/den
 
 def polytropic_eff_discharge(P_a,P_dis,gamma = 1.4):
+    """Compute polytropic eff discharge."""
     num = np.log10((P_dis.p0/P_a.p)**((gamma-1)/gamma))
     den = np.log10(P_dis.T0/P_a.T)
     return num/den

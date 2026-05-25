@@ -85,11 +85,7 @@ def get_eta(P1, P2, m_dot, f):
     return eta_is, Pt, P2_T0s
 
 
-def with_P_poly(P_T, m_dot, f,
-                Pin=None,
-                TIT=None,
-                eta_p=1,
-                tol=1e-5):
+def with_P_poly(P_T, m_dot, f,Pin=None,TIT=None,eta_p=1,tol=1e-5):
     """
     Computes turbine outlet state using power balance with
     polytropic efficiency and Cp(T)-dependent properties.
@@ -163,7 +159,7 @@ def with_P_poly(P_T, m_dot, f,
         diff = abs(Cp_new - Cp_trial) / Cp_trial
         Cp_trial = Cp_new
 
-    pi_t = (T2_0 / Pin.T0)**(gamma / (eta_p * (gamma - 1)))
+    pi_t = (T2_0 / Pin.T0)**(gamma * eta_p / (gamma - 1))
     P2 = Air()
     P2.T0 = T2_0
     P2.cp = findCp(P2.T0, f)
@@ -238,4 +234,47 @@ def rev_with_P(P_T, m_dot, f, P2=None, Tout=None, eta_is=1, tol=1e-5):
     return P2, Cp_new, T2s
 
 def get_eta_poly(pi_t,eta_is,gamma):
+    """Return eta poly."""
     return np.log(1 - eta_is*(1 - pi_t**(-(gamma-1)/gamma))) / np.log(pi_t**(-(gamma-1)/gamma))
+
+def get_eta_is(pi_t, eta_poly, gamma=1.4):
+    """
+    Converts compressor polytropic efficiency into overall
+    isentropic efficiency.
+
+    Relation used:
+
+        eta_is =
+            (pi_c^((gamma-1)/gamma) - 1)
+            --------------------------------
+            (pi_c^((gamma-1)/(gamma*eta_poly)) - 1)
+
+    Args:
+        pi_c (float): Compressor pressure ratio.
+        eta_poly (float): Polytropic efficiency.
+        gamma (float, optional): Specific heat ratio. 
+
+    Returns:
+        float:
+            Isentropic efficiency.
+    """
+
+    a = (gamma - 1) / gamma
+
+    return (1-pi_t**(-eta_poly*a) ) / (1 - pi_t**(-a))
+
+def with_eta_poly(P_T, m_dot, f, Pin=None, eta_p=1, pi_t = 0.8, tol=1e-5):
+
+    """Compute eta poly."""
+    P2,cp12,T2s = with_P(P_T, m_dot, f, Pin = Pin, eta_is=1)
+    diff = np.inf
+    while diff > tol :
+        Cp = findCp(av(Pin.T0,P2.T0),f)
+        gamma = get_gamma(Cp)
+        eta_is = get_eta_is(pi_t,eta_p,gamma)
+        P2,cp12,T2s = with_P(P_T, m_dot, f, Pin = Pin, eta_is=eta_is)
+        new_pi_t = P2.p0/Pin.p0
+        diff = (new_pi_t - pi_t)/pi_t
+        pi_t = new_pi_t
+    return P2,cp12,T2s,pi_t
+    

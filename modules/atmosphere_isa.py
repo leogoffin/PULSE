@@ -11,6 +11,7 @@ class Air:
     """
 
     def __init__(self, v: float = 0,R : float = 287.058):
+        """Compute   init  ."""
         self.v = v
 
         # Static (ambient) properties
@@ -40,6 +41,7 @@ class Air:
 
 
     def get_cp_from_gamma(self,gamma = None):
+        """Return cp from gamma."""
         if gamma is not None : 
             self.gamma = gamma
         if self.gamma is None : 
@@ -49,6 +51,7 @@ class Air:
         return self.cp
 
     def get_gamma_from_cp(self,cp = None):
+        """Return gamma from cp."""
         if cp is not None : 
             self.cp = cp
         if self.cp is None : 
@@ -222,6 +225,7 @@ class Air:
         return self.mu, self.nu
 
     def is_complete(self):
+        """Return whether complete."""
         required = [self.rho0, self.T0, self.p0, self.M]
         return all(v is not None for v in required)
 
@@ -242,6 +246,7 @@ class Air:
         return pi_ns
 
     def RAM(self,RR = 1,get_pi_R = True):
+        """Compute RAM."""
         P1 = Air(self.v)
         P1.T0 = self.T0
         P1.rho0 = self.rho0
@@ -279,6 +284,7 @@ class Air:
         """
 
         def fmt(val, unit="", precision=3):
+            """Compute fmt."""
             if val is None:
                 return "—"
             if abs(val) < 1e-3 or abs(val) > 1e5:
@@ -330,6 +336,7 @@ class Air:
         """
 
         def fmt(val, unit="", precision=3):
+            """Compute fmt."""
             if val is None:
                 return "—"
             if abs(val) < 1e-3 or abs(val) > 1e5:

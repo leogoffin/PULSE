@@ -6,13 +6,13 @@ from .functions import av
 def with_Qc(P1, Qc, T0_ref, m_dot, m_dot_e, f,
                P2=None, v=0, delta_p=0, tol=1e-5):
     """
-    Solves combustor outlet temperature using energy balance with variable Cp and fuel fraction f.
+    Solve combustor outlet conditions using energy balance with variable Cp.
 
     Args:
         P1 (Air): Inlet state object.
         Qc (float): Heat released in combustor (W).
         T0_ref (float): Reference temperature for enthalpy split (K).
-        m_dot (float): Air mass flow rate (kg/s).
+        m_dot (float): Inlet air mass flow rate (kg/s).
         m_dot_e (float): Exhaust mass flow rate (kg/s).
         f (float): Fuel-air ratio.
         P2 (Air, optional): Outlet state object. Defaults to None.
@@ -56,7 +56,7 @@ def rev_with_f(P2, delta_hf, T0_ref, m_dot, f,
 
     Args:
         P2 (Air): Outlet state object.
-        delta_hf (float): Fuel enthalpy difference.
+        delta_hf (float): Fuel heating value (J/kg).
         T0_ref (float): Reference temperature for enthalpy split (K).
         m_dot (float): Air mass flow rate (kg/s).
         f (float): Fuel-air ratio.
@@ -103,7 +103,7 @@ def with_Tout(P1, T0_ref, m_dot, Delta_hf, T0_out, f=0, eta_cc=1, pi_cc=1, tol=1
         P1 (Air): Inlet state object.
         T0_ref (float): Reference temperature (K).
         m_dot (float): Air mass flow rate (kg/s).
-        Delta_hf (float): Fuel heating value.
+        Delta_hf (float): Fuel heating value (J/kg).
         T0_out (float): Target outlet temperature (K).
         f (float, optional): Initial fuel fraction offset. Defaults to 0.
         eta_cc (float, optional): Combustion efficiency. Defaults to 1.
@@ -150,7 +150,7 @@ def get_eta(P1, T0_ref, m_dot, f, Delta_hf, T0_out):
         T0_ref (float): Reference temperature (K).
         m_dot (float): Air mass flow rate (kg/s).
         f (float): Fuel-air ratio.
-        Delta_hf (float): Fuel enthalpy.
+        Delta_hf (float): Fuel heating value (J/kg).
         T0_out (float): Outlet temperature (K).
 
     Returns:
@@ -170,21 +170,21 @@ def get_eta(P1, T0_ref, m_dot, f, Delta_hf, T0_out):
 
 def with_f(P1, T0_ref, m_dot, Delta_hf, fadd, fin = 0, eta_cc=1, pi_cc=1, tol=1e-5):
     """
-    Computes fuel-air ratio and outlet state for a specified combustor outlet temperature.
+    Compute outlet state after adding fuel to the combustor.
 
     Args:
         P1 (Air): Inlet state object.
         T0_ref (float): Reference temperature (K).
         m_dot (float): Air mass flow rate (kg/s).
-        Delta_hf (float): Fuel heating value.
-        T0_out (float): Target outlet temperature (K).
-        f (float, optional): Initial fuel fraction offset. Defaults to 0.
+        Delta_hf (float): Fuel heating value (J/kg).
+        fadd (float): Added fuel-air ratio.
+        fin (float, optional): Initial inlet fuel-air ratio. Defaults to 0.
         eta_cc (float, optional): Combustion efficiency. Defaults to 1.
-        pi_cc (float, optional): Pressure ratio. Defaults to 1.
+        pi_cc (float, optional): Combustor pressure ratio. Defaults to 1.
         tol (float, optional): Convergence tolerance. Defaults to 1e-5.
 
     Returns:
-        tuple: (Outlet state, fuel mass flow rate, fuel-air ratio)
+        Air: Outlet state object with updated thermodynamic properties.
     """
     Cp1_r = findCp(av(P1.T0, T0_ref), fin)
     ftot = fadd +fin

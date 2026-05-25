@@ -34,7 +34,7 @@ A_opt = 0
 P_opt = 0
 for m_ratio in mdot_ratios : 
     mdot = true_massflow_from_corrected(m_ratio*mdot_ref,P1,Pref)*BPR/(1+BPR)
-    eta_is = eta_is_from_eta_poly(pi_f(m_ratio),eta_p(m_ratio))
+    eta_is = compr.get_eta_is(pi_f(m_ratio),eta_p(m_ratio))
     P2,Pc,cp = compr.with_eta(P1,mdot,pi_f(m_ratio),eta_is)
     P3,choked,NPR,A = adiabatic_convergent_nozzle(P2,mdot,0,P1.p)
     
@@ -46,7 +46,6 @@ for m_ratio in mdot_ratios :
         A_opt = A
         P_opt = Pc
 
-
 print(f"Fan Power                      : {P_opt/1e6:.2f} MW")
 print(f"Thrust                         : {Tmax:.0f} N")
 print(f"Exhaust area                   : {A_opt:.3f} m²")   
@@ -56,8 +55,9 @@ print('-'*50)
 
 P1 = Pref
 def error(m_ratio):
+    """Return the error for the given input."""
     mdot = m_ratio*mdot_ref *BPR/(1+BPR)
-    eta_is = eta_is_from_eta_poly(pi_f(m_ratio),eta_p(m_ratio))
+    eta_is = compr.get_eta_is(pi_f(m_ratio),eta_p(m_ratio))
     P2,Pc,cp = compr.with_eta(P1,mdot,pi_f(m_ratio),eta_is)
     P3,choked,NPR,A = adiabatic_convergent_nozzle(P2,mdot,0,P1.p)
     return A - A_opt
@@ -66,7 +66,7 @@ m_ratio,i = bisection(error,mdot_ratios[0],mdot_ratios[-1])
 
 
 mdot = m_ratio*mdot_ref *BPR/(1+BPR)
-eta_is = eta_is_from_eta_poly(pi_f(m_ratio),eta_p(m_ratio))
+eta_is = compr.get_eta_is(pi_f(m_ratio),eta_p(m_ratio))
 P2,Pc,cp = compr.with_eta(P1,mdot,pi_f(m_ratio),eta_is)
 P3,choked,NPR,A = adiabatic_convergent_nozzle(P2,mdot,0,P1.p)
 T = simple_thrust(mdot,0,P1,P3,A)

@@ -36,6 +36,7 @@ P1.set_isa(alt)
 
 
 def ex1(BPR,pi_f,verbose = False):
+    """Compute ex1."""
     mdot = mdotp*(BPR+1)
     mdots = mdotp * BPR
 
@@ -119,6 +120,7 @@ BPR = 12.5
 Thrust = 140e3 #N
 
 def error(pi_f):
+    """Return the error for the given input."""
     return ex1(BPR,pi_f,False) - Thrust
 
 pi_f3,i = bisection(error,1.1,1.5)

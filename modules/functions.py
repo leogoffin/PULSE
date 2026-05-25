@@ -4,80 +4,19 @@ from .atmosphere_isa import Air
 from scipy.interpolate import interp1d
 
 def av(x: float, y: float):
-    """
-    Computes arithmetic mean of two values.
-
-    Args:
-        x (float): First value.
-        y (float): Second value.
-
-    Returns:
-        float: Mean of x and y.
-    """
     return (x+y)/2
 
 def get_gamma(Cp):
-    """
-    Computes specific heat ratio from Cp.
-
-    Args:
-        Cp (float): Specific heat capacity at constant pressure (J/kg·K).
-
-    Returns:
-        float: Specific heat ratio gamma.
-    """
     R = 287.058
     return Cp/(Cp-R)
 
 
 def find_Qc(hf1, hf2, mdotf, eta_cc):
-    """
-    Computes combustor heat release.
-
-    Args:
-        hf1 (float): Fuel inlet enthalpy (J/kg).
-        hf2 (float): Fuel outlet enthalpy (J/kg).
-        mdotf (float): Fuel mass flow rate (kg/s).
-        eta_cc (float): Combustion efficiency.
-
-    Returns:
-        float: Heat released (W).
-    """
     return (hf2-hf1)*eta_cc*mdotf
 
 
 def Heat_Rate(hf1, hf2, mdotf, Pe, eta_cc=1):
-    """
-    Computes heat rate of the engine.
-
-    Args:
-        hf1 (float): Fuel inlet enthalpy (J/kg).
-        hf2 (float): Fuel outlet enthalpy (J/kg).
-        mdotf (float): Fuel mass flow rate (kg/s).
-        Pe (float): Engine power output (W).
-        eta_cc (float, optional): Combustion efficiency. Defaults to 1.
-
-    Returns:
-        float: Heat rate.
-    """
     return find_Qc(hf1, hf2, mdotf, eta_cc) / Pe
-
-
-def isentropic_eff(h1, h2, h2s, type: str = "compr"):
-    """
-    Computes isentropic efficiency for compressor or turbine.
-
-    Args:
-        h1 (float): Inlet enthalpy (J/kg).
-        h2 (float): Actual outlet enthalpy (J/kg).
-        h2s (float): Isentropic outlet enthalpy (J/kg).
-        type (str, optional): Component type ("compr" or "turb"). Defaults to "compr".
-
-    Returns:
-        float: Isentropic efficiency.
-    """
-    if type == "compr":
-        return (h2s-h1)/(h2-h1)
 
 def adiabatic_convdiv_nozzle(P1,m_dot,f,pa,gamma13 = 1.37,tol = 1e-5):
     """
@@ -124,7 +63,7 @@ def adiabatic_convdiv_nozzle(P1,m_dot,f,pa,gamma13 = 1.37,tol = 1e-5):
 
     return P3, NPR, At
 
-def adiabatic_convergent_nozzle(P1,m_dot,f,pa,gamma13 = 1.37,tol = 1e-5,convdiv = False ):
+def adiabatic_convergent_nozzle(P1,m_dot,f,pa,gamma13 = 1.37,tol = 1e-5):
     """
     Computes flow through a convergent nozzle with choking condition.
 
@@ -150,7 +89,7 @@ def adiabatic_convergent_nozzle(P1,m_dot,f,pa,gamma13 = 1.37,tol = 1e-5,convdiv 
 
     while diff > tol:
 
-        if NPR < NPR_star or convdiv:
+        if NPR < NPR_star :
             choked = False
             P3.M = np.sqrt(2/(gamma13 -1)*((P3.p0/pa)**((gamma13-1)/gamma13)-1))
             P3.set_static()
@@ -182,6 +121,7 @@ def adiabatic_convergent_nozzle(P1,m_dot,f,pa,gamma13 = 1.37,tol = 1e-5,convdiv 
     return P3, choked, NPR, A
 
 def iterate_M_nozzle(P1,pa,f,gamma = 1.39,tol = 1e-4):
+    """Compute iterate M nozzle."""
     P2 = Air(R = P1.R)
     P2.T0 = P1.T0
     P2.p0 = P1.p0
@@ -199,27 +139,6 @@ def iterate_M_nozzle(P1,pa,f,gamma = 1.39,tol = 1e-4):
     P2.v = P2.M*P2.a
     
     return P2,cp
-
-
-
-def P_compr(m_dot, Cp12, f, P1, P2):
-    """
-    Computes compressor power from enthalpy rise.
-    """
-    return m_dot * Cp12 * (P2.T0 - P1.T0)
-
-
-def P_turb(m_dot, Cp12, f, P1, P2):
-    """
-    Computes turbine power from enthalpy drop.
-    """
-    P2.h0 = P1.h0 - Cp12 * (P1.T0 - P2.T0)
-    gamma = get_gamma(Cp12)
-    P2.p0 = P1.p0 * (P2.T0 / P1.T0)**(gamma/(gamma-1))
-    P2.rho0 = P2.p0 / (P2.R * P2.T0)
-    P2.cp = findCp(P2.T0,f)
-    P2.s = P1.s
-    return m_dot*Cp12*(P1.T0-P2.T0)
 
 
 def turbofan_thrust(m_dot_p,m_dot_s,f,P0,PP,PS= None,AP= 0,AS = 0):
@@ -256,9 +175,11 @@ def propulsive_efficiency(vin,vout,mdot,f,T):
     return 2*T*vin/(mdot*(1+f)*vout**2 - mdot * vin**2)
 
 def thermal_efficiency_turbofan(m_dot_p, m_dot_f, m_dot_s, v_eff_p, v_eff_s, m_dot_a, v_a, delta_hf):
+    """Compute thermal efficiency turbofan."""
     return (((m_dot_p + m_dot_f)*v_eff_p**2 + m_dot_s*v_eff_s**2 - m_dot_a*v_a**2) / (2*m_dot_f*delta_hf))
 
 def propulsive_efficiency_turbofan(Thrust_tot, v_a, m_dot_p, m_dot_f, m_dot_s, v_eff_p, v_eff_s, m_dot_a):
+    """Compute propulsive efficiency turbofan."""
     return ((2*Thrust_tot*v_a) / ((m_dot_p + m_dot_f)*v_eff_p**2 + m_dot_s*v_eff_s**2 - m_dot_a*v_a**2))
 
 def corrected_massflow(mdot_ref,P1,Pref):
@@ -334,66 +255,8 @@ def approx_mixing(PP,PS,T0_ref,mdotp,mdots,f,pi_m = 1,tol = 1e-5):
     return Pm,global_f
 
 
-
-def eta_is_from_eta_poly(pi_c, eta_poly, gamma=1.4):
-    """
-    Converts compressor polytropic efficiency into overall
-    isentropic efficiency.
-
-    Relation used:
-
-        eta_is =
-            (pi_c^((gamma-1)/gamma) - 1)
-            --------------------------------
-            (pi_c^((gamma-1)/(gamma*eta_poly)) - 1)
-
-    Args:
-        pi_c (float):
-            Compressor pressure ratio.
-
-        eta_poly (float):
-            Polytropic efficiency.
-
-        gamma (float, optional):
-            Specific heat ratio.
-            Defaults to 1.4.
-
-    Returns:
-        float:
-            Isentropic efficiency.
-    """
-
-    a = (gamma - 1) / gamma
-
-    return (pi_c**a - 1) / (pi_c**(a / eta_poly) - 1)
-
-
-def eta_poly_from_eta_is(pi_c, eta_is, gamma=1.4):
-    """
-    Converts compressor isentropic efficiency into
-    polytropic efficiency.
-
-    Args:
-        pi_c (float):
-            Compressor pressure ratio.
-
-        eta_is (float):
-            Isentropic efficiency.
-
-        gamma (float, optional):
-            Specific heat ratio.
-            Defaults to 1.4.
-
-    Returns:
-        float:
-            Polytropic efficiency.
-    """
-
-    a = (gamma - 1) / gamma
-
-    return (a * np.log(pi_c)) / (np.log(1 + (pi_c**a - 1) / eta_is))
-
 def choking_NPR(gamma):
+    """Compute choking NPR."""
     return ((gamma + 1 )/2)**(gamma/(gamma-1))
 
 
@@ -411,19 +274,24 @@ def PropulsiveEff(m_dot_in, m_dot_f, v_j, v_1, T):
 
 
 def ThermalEff_from_Power(m_dot_a, v_j, v_1, P):
+    """Compute ThermalEff from Power."""
     eta_th = 0.5 * m_dot_a * (v_j**2 - v_1**2) / P
     return eta_th
 
 def overalleff(eta_t,eta_p):
+    """Compute overalleff."""
     return eta_p*eta_t
 
 def f(M,gamma):
+    """Return the ideal gas flow function f(M, gamma)."""
     return 1 + (gamma-1)/2 * M**2
 
 def F(M,gamma):
+    """Return the isentropic flow function F(M, gamma)."""
     return np.sqrt(gamma)* M * f(M,gamma)**(-(gamma + 1)/ (2 * (gamma - 1)))
 
 def set_Mach(P,gamma = 1.4, tol = 1e-4):
+    """Return or compute Mach."""
     diff = np.inf
     for _ in range(5) : 
         P.M = P.v / np.sqrt(gamma * P.R * P.T)  #Mach number
@@ -432,17 +300,45 @@ def set_Mach(P,gamma = 1.4, tol = 1e-4):
         P.get_gamma_from_cp() #gets the updated gamma 
 
 def interpolate(x,y):
+    """Compute interpolate."""
     return interp1d(x,y, kind='linear', bounds_error=False, fill_value='extrapolate')
 
 
 def effective_velocity(Pe, mdot, p_a, A_e):
-    """
-    Effective exhaust velocity.
-
-    Returns
-    -------
-    float
-        Effective exhaust velocity (m/s)
-    """
     return Pe.v + (Pe.p - p_a) * A_e / mdot
 
+def intercooler(Pp,Ps,eta_intercooler,mdotp,mdots,tol = 1e-5):
+    """Compute intercooler."""
+    if Pp.cp is None : 
+        Pp.cp = findCp(Pp.T0,0)
+    if Ps.cp is None : 
+        Ps.cp = findCp(Ps.T0,0)
+    
+    new_Pp = Air()
+    new_Ps = Air()
+    cpp = Pp.cp
+    cps = Ps.cp
+
+    diff = np.inf
+    while diff > tol :
+
+        minimum = min(cpp*mdotp,cps*mdots)
+        q = eta_intercooler * minimum * (Pp.T0 - Ps.T0)
+
+        new_Pp.T0 = Pp.T0 - q / cpp / mdotp
+        new_Ps.T0 = Ps.T0 + q / cps / mdots
+
+        new_cpp = findCp(av(new_Pp.T0,Pp.T0),0)
+        cps = findCp(av(new_Ps.T0,Ps.T0),0)
+
+        diff = (new_cpp - cpp)/cpp
+        cpp = new_cpp
+
+    new_Pp.p0 = Pp.p0 
+    new_Ps.p0 = Ps.p0
+    new_Pp.cp = findCp(new_Pp.T0,0)
+    new_Ps.cp = findCp(new_Ps.T0,0)
+    new_Pp.get_gamma_from_cp()
+    new_Ps.get_gamma_from_cp()
+
+    return new_Pp , new_Ps

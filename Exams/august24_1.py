@@ -39,6 +39,7 @@ P2,pi_r = P1.RAM(RR)
 
 def error(pi_f):
 
+    """Return the error for the given input."""
     pi_HPC = OPR/pi_f
     P3,Pf,cp23 = compr.with_eta_poly(P2,mdot,pi_f,eta_c_p)
     P4,PHPC,cp34 = compr.with_eta_poly(P3,mdotp,pi_HPC,eta_c_p) 
@@ -111,14 +112,3 @@ print(f"Thermal efficiency (wet)    : {eta_tw:.3f}")
 print(f"Propulsive efficiency (wet) : {eta_pw:.3f}")
 print(f"Overall efficiency (wet)    : {eta_pw*eta_tw:.3f}")
 
-P1.sprint(1)
-P2.sprint(2)
-P3.sprint(3)
-P4.sprint(4)
-P5.sprint(5)
-P6.sprint(6)
-P6.sprint(6)
-P7.sprint(7)
-P8.sprint(8)
-P9d.sprint(9)
-P10d.sprint(10)

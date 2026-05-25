@@ -35,6 +35,7 @@ import warnings
 def findCp(t_mean, d):
     # DATA
     # Fuel-to-Air Ratio values for the curves
+    """Compute findCp."""
     FAR = np.arange(0, 0.08, 0.01)
     # Heat capacities at constant pressure
     #                        Temp\FAR     0             0.01          0.02          0.03          0.04          0.05          0.06          0.07 
