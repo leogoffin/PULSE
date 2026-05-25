@@ -6,10 +6,29 @@ from scipy.interpolate import interp1d
 def av(x: float, y: float):
     return (x+y)/2
 
-def get_gamma(Cp):
+
+def TotalPressure(p_s, gamma, M):
+    """
+    Computes total (stagnation) pressure from static pressure.
+
+    Args:
+        p_s   : static pressure [Pa]
+        gamma : specific heat ratio [-]
+        M     : Mach number [-]
+
+    Returns:
+        p_tot : total pressure [Pa]
+    """
+
+    return p_s * (1 + (gamma - 1) / 2 * M**2) ** (gamma / (gamma - 1))
+
+
+def get_gamma(Cp,R = 287.058):
     R = 287.058
     return Cp/(Cp-R)
 
+def get_cp(gamma,R = 287.058):
+    return gamma * R / (gamma - 1)
 
 def find_Qc(hf1, hf2, mdotf, eta_cc):
     return (hf2-hf1)*eta_cc*mdotf

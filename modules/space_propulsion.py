@@ -509,12 +509,12 @@ def ground_operation(Pe_star,ptot, mdot, A_e, A_t,K=2.5,g=9.81,doprint=False):
     return Pa.p,T, Isp, c_T
 
 
-def get_cT(P_ratio,A_ratio,gamma,Me,pa = 0):
+def get_cT(P_ratio,A_ratio,gamma,Me,pa_over_pe = 0):
     """Return cT."""
-    if pa == 0 :
+    if pa_over_pe == 0 :
         return A_ratio/P_ratio * (1 +gamma*Me**2)
     else : 
-        return A_ratio/P_ratio * (gamma*Me**2)
+        return A_ratio/P_ratio * (gamma*Me**2 + 1 - pa_over_pe)
 
 def At_from_cT(T,cT,p0):
     """Compute At from cT."""
@@ -573,3 +573,115 @@ def IterateCp_Tc(f_CO2, f_H2O, f_O2, MR, MR_star, delta_hf, T_r = 288.15, T_c = 
 
     return T_c, Cp_mix
 """
+
+def IterateMeTotalCds_FindThrust(gamma, R, p_tot, T_tot, A_ratio, m_dot, p_a):
+    """Implements bissection method to finc M_e, the Mach nb at the exhaust since F(M) is always increasing 
+       and the throat is choked. A_ratio = Ae/At.
+
+       Set m_dot to 0 if it is not known
+       
+       Returns T, Isp, C_T (thrust coeff) and pe_star
+       """
+    def MachFct(M):
+        exp = - (gamma + 1) / (2 * (gamma-1))
+        fct = np.sqrt(gamma) * M * (1 + (gamma-1) * M**2 / 2)**exp
+        return fct
+    
+    def res(Me):
+        res = MachFct(Me) - MachFct(1) / A_ratio
+        return res
+    
+    # Initialisation of bissection method (we know Me>1)
+    M_low, M_high = 1.001, 50.0          
+    tol           = 1e-8
+    max_iter      = 200
+
+    #print(f"res(M_low)  = {res(M_low)}")
+    #print(f"res(M_high) = {res(M_high)}")
+    
+    assert res(M_low) > 0 and res(M_high) < 0, "Root out of the interval"
+
+    for i in range(max_iter):
+        M_mid = 0.5 * (M_low + M_high)
+        if res(M_mid) > 0:      # We are left of the root => increase M_low
+            M_low = M_mid
+        else:                    # We are right of the root => decrease M_high
+            M_high = M_mid
+        if (M_high - M_low) < tol:
+            break
+
+    Me = 0.5 * (M_low + M_high)
+    #print(f" Me = {Me:.6f}  (converged in {i+1} iterations)")
+    pe = StaticPressure(p_tot, gamma, Me)
+    Te = Static_Temp(T_tot, gamma, Me)
+    ae = np.sqrt(gamma* Te *R)
+    ve = ae * Me 
+    #print(f" pe {pe}, Te {Te}, ve{ve}")
+
+    Ae = m_dot * np.sqrt(R*T_tot) / (p_tot * MachFct(Me))
+    At = m_dot * np.sqrt(R*T_tot) / (p_tot * MachFct(1))
+    #print(f" At {At}, Ae {Ae}")
+
+    # if m_dot is not known, we determine C_star and C_T
+    if m_dot == 0:
+        g = 9.81
+        C_T = A_ratio * (1 + gamma * Me**2) * pe / p_tot
+        C_T = A_ratio * (gamma * Me**2 * pe/p_tot + (pe - p_a)/p_tot)
+        C_star = np.sqrt(R*T_tot)/ MachFct(1)
+        Isp = C_T * C_star / g
+        
+        return Isp, C_T, pe
+
+def low_reservoir(mdot,T,Pr):
+    tot_impulse = 5000 #N*s
+    resm = 0.05
+    dt = tot_impulse/T
+    mT = mdot*dt
+    print(f"Useful mass : {mT:.3f} kg") 
+    m_init = mT/(1-resm)
+    print(f"Initial mass : {m_init:.3f} kg") 
+    pfinal = Pr.p0
+    pinit = pfinal/resm
+    #V is constant 
+    V = V_perfect_gas(m_init*resm,Pr)
+    print(f"Tank Volume : {V:.3e} m³")
+
+
+def thrustmin_space(a_ratio,Pref,Pr,gamma,cTg,K = 2.5):
+    # 3. Thrust min = > a la plus basse altitude possible (sea level)
+    # la pression du resérvoir diminue jusqu à sa limite max : cas critique r = 0.85 re => pn prend l'aire qui correspond
+    # nouveau A_ratio 
+    # Nouvelle inconnue est pression totale, utiliser pressure ratio = F(M) àpd du mach obtenu
+    new_A_ratio = a_ratio * (0.85**2)
+    p_s =  Pref.p / K # On a la pression statique avec le critère
+    Me = M_nozzle2(0,new_A_ratio, gamma)
+
+    p_tot = p_s * (1 + (gamma - 1) / 2 * Me**2) ** (gamma / (gamma - 1))
+
+    __, C_T_min, pe = IterateMeTotalCds_FindThrust(gamma, Pr.R, p_tot,Pr.T0, new_A_ratio, 0, Pref.p)
+
+    print(C_T_min/cTg)
+
+def find_nozzle_carac(Pr,a_ratio,gamma,Pref,a_ratios,ptot,cp):
+    c_star = charac_vel(Pr)
+
+    Me = M_nozzle2(Pr,a_ratio,Mmax = 20)
+    Pe = exhaust_cds(Pr,Me)
+    p_ratio = ptot/Pe.p
+    cTg = get_cT(p_ratio,a_ratio,gamma,Me,Pref.p/Pe.p)
+    Ispg = get_Isp_with_cT_star(cTg,c_star)
+
+    Me = M_nozzle2(Pr,a_ratios,Mmax = 20)
+    Pe = exhaust_cds(Pr,Me)
+    p_ratio = ptot/Pe.p
+    cTs = get_cT(p_ratio,a_ratios,gamma,Pe.M,0)
+    Isps = get_Isp_with_cT_star(cTs,c_star)
+
+    print(f"R                         : {Pr.R:.0f} J/kgK")
+    print(f"Cp                        : {cp:.0f} J/kg.K")
+    print(f"Char vel                  : {c_star:.0f} m/s")
+    print(f"Thrust coeff (ground)     : {cTg:.2f}")
+    print(f"Specific impulse (ground) : {Ispg:.0f} s")
+    print(f"Thrust coeff (space)      : {cTs:.2f} ")
+    print(f"Specific impulse (space)  : {Isps:.0f} s")
+print(f"")
